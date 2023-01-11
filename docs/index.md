@@ -215,9 +215,17 @@ There are two major differences between a `kind` cluster and a TKG bootstrap clu
 So, we'll now "mature" or `kind` cluster into a true `TKG bootstrap` cluster.
 
 Now that the kind cluster is up, tanzu cli will start customizing it. 
+
+### Take special note of kapp
+
+The logs below show kapp-controller being installed.  This must be one of the first steps in TKG setup, you'll see why later!
 ```
  Warning: unable to find component 'kube_rbac_proxy' under BoM
+
+ #### Note this !!!! One of the first things we do is install kapp-controller.  We'll rely on it heavily later.
+
  Installing kapp-controller on bootstrap cluster...
+ 
  User ConfigValues File: /tmp/2991662634.yaml
  Kapp-controller values-file: /tmp/330923605.yaml
  Kapp-controller configuration file: /tmp/3117802898
@@ -298,7 +306,9 @@ Cert manager is how CAPI webhooks authenticate to each other.  It's an implement
       Deleting Certificate="selfsigned-cert" Namespace="cert-manager-test"
 ```
 
-# Installing CAPI objects onto the Kind cluster
+# Adding CAPI to kind: Other CAPI objects
+
+Once cert-manager is up, you'll see CAPI providers and CRDs being added into the Kind cluster.
 
 Now, still seting up CAPI on kind , we are now installing CAPI objects: These "Creating" logs come from 
 https://github.com/kubernetes-sigs/cluster-api/blob/main/cmd/clusterctl/client/cluster/components.go the internal `createObj` tools in cluster api, which know how to install arbitrary kubernetes objects.... 
@@ -334,8 +344,14 @@ Still in the init.go function of tkg/client...
 
 Still in the bootstrap cluster: Next, we'll wait for packages. 
 
-# MAGIC PART: tkg-pkg and "Waiting for package" hot loop 
+# TKG'ifying our Kind cluster with the "tkg-pkg" metapackage
 
+The tkg-pkg metapackage is a new TKG feature.  It puts all of the management cluster's packages into one, easy to grok location.
+
+- Earlier, we installed `kapp` on the kind cluster.  You'll notice it was one of the first things we did.
+- This single package will then be introspected by tanzu CLI to make a bunch of `PackageInstall`s.  
+- Those `PackageInstall` objects will be reconciled by `kapp` controller
+- `kapp` will then ensure that all the packages for TKG are running on your kind cluster, so that you can use it to eventually bootstrap a new permanant management cluster.
 
 Below we'll "wait for package", i.e. we'll wait for individual packages to come online:
 ```
