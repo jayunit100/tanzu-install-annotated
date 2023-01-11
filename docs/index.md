@@ -273,7 +273,9 @@ Now we "Fetch" providers.   This happens in clusterctl https://github.com/kubern
 At this poing we see the cert-manager components being created, https://github.com/kubernetes-sigs/cluster-api/blob/main/cmd/clusterctl/client/cluster/cert_manager.go#L495. 
 Again, remember, this function is being called by tanzu cli, but under the hood tanzu cli is calling `clusterctl`, which knows natively how to set up certmanager.
 
-# Kind Cert Manager setup 
+## Adding CAPI to Kind: Installing Cert Manager 
+
+When you install CAPI, one of the first things that happens, is `clusterctl` will make sure you set up cert manager.
 
 Cert manager is how CAPI webhooks authenticate to each other.  It's an implementation detail of how CAPI communicates within itself. 
 
