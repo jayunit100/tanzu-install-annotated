@@ -7,19 +7,20 @@ with code snippets inside of tanzu-framework and cluster-api.
 
 ## TKG Client and Kind Bootstrapping
 
+Curling down the TKG bom.  This only happens on prem.  But its a starting point that is worth noting.
 ```
-  [2023-01-10T19:36:11.674Z] + curl https://build-artifactory.eng.vmware.com/kscom-generic-local/TKG/channels/442519250544895703/_boltArtifacts/tkg-v2.1.0-rc.2.buildinfo.yaml
+ curl https://build-artifactory.eng.vmware.com/kscom-generic-local/TKG/channels/442519250544895703/_boltArtifacts/tkg-v2.1.0-rc.2.buildinfo.yaml
 ```
 
+In the real world, you'll get BOM components (like the OVAs you upload, or the TKG client) from https://customerconnect.vmware.com/downloads/details?downloadGroup=TKG-160&productId=988&rPId=93384, or a similar url.
+
+We now will check tanzu's and update the plugins: 
+
 ```
-  sudo -S -p '[sudo] password: ' ln -sf $(realpath /home/kubo/tanzu_tools/cli/core/v0.28.0-dev/ INFO:root:====== 99   CMD: tanzu config get | yq eval '.clientOptions.features.global.context-aware-cli-for-plugins' -
-  true
+tanzu config get | yq eval '.clientOptions.features.global.context-aware-cli-for-plugins' - true
   INFO:root:context-aware-cli-for-plugins is ON
-
   tanzu plugin clean
   ✔  successfully cleaned up all plugins 
-
-
   tanzu plugin repo update -b tanzu-cli-framework core
   ✔  successfully updated repository configuration for core
 ```
