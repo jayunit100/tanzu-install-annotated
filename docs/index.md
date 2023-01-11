@@ -1,4 +1,10 @@
-# TKG Client and Kind Bootstrapping
+# TKG Annotated Installation logs for Glasgow, ClusterClass.
+
+
+This markdown takes all of your favorite TKG logging messages and explains them in plain english, and associates them
+with code snippets inside of tanzu-framework and cluster-api.
+
+## TKG Client and Kind Bootstrapping
 
 ```
   [2023-01-10T19:36:11.674Z] + curl https://build-artifactory.eng.vmware.com/kscom-generic-local/TKG/channels/442519250544895703/_boltArtifacts/tkg-v2.1.0-rc.2.buildinfo.yaml
