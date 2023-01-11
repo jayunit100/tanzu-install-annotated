@@ -71,7 +71,7 @@ This might take a while...
 ```
 
 
-# TKG Bootstrap, Kind
+# Bootstrapping TKG with Kind
 
 The `InitRegion` function lives inside Tanzu CLI.  IT has ALL the logic for kind and mgmt cluster bootstrapping.  
 
@@ -205,7 +205,14 @@ InitRegion: Next, the CNI Installation (kind-net, and so on happens).  Note were
  Bootstrapper created. Kubeconfig: /home/kubo/.kube-tkg/tmp/config_Z1ics3TW
 ```
 
-## Kind Cluster: TKG And ClusterClass customizations
+## Customizing the Kind Cluster with TKG's payload
+
+There are two major differences between a `kind` cluster and a TKG bootstrap cluster. 
+
+- CAPI: The ability to install and create cluster API objects, and infrastructure.
+- Tanzu: The installation of packages for things such as kapp-controller, which orchestrate installation of packages onto clusters.
+
+So, we'll now "mature" or `kind` cluster into a true `TKG bootstrap` cluster.
 
 Now that the kind cluster is up, tanzu cli will start customizing it. 
 ```
