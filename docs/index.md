@@ -1,5 +1,4 @@
-# TKG Annotated Installation logs for Glasgow, ClusterClass.
-
+# A Fully Annotated Walkthrough of TKG Installation with ClusterClass
 
 This markdown takes all of your favorite TKG logging messages and explains them in plain english, and associates them
 with code snippets inside of tanzu-framework and cluster-api.
