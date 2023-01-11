@@ -3,6 +3,8 @@
 This markdown takes all of your favorite TKG logging messages and explains them in plain english, and associates them
 with code snippets inside of tanzu-framework and cluster-api.
 
+[Contributors Welcome](https://github.com/jayunit100/tanzu-install-annotated) !!!
+
 ## TKG Client and Kind Bootstrapping
 
 ```
