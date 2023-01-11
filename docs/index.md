@@ -52,10 +52,24 @@ with code snippets inside of tanzu-framework and cluster-api.
 # Uploading the OVAs to Vsphere
 
 
-- INFO:root:Downloading OVA from http://build-squid.eng.vmware.com/build/mts/release/bora-21093855/publish/lin64/tkg_release/node/ova-ubuntu-2004-v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93.ova to 
+On VSphere, without the supervisor, users typically will need to download and then import OVAs into their data center.     This is often done
+with a tool like `govc`.   For example:
+
+```
+govc import.ova ./ubuntu-2004-kube-v1.23.8+vmware.2-tkg.1-85a434f93857371fccb566a414462981.ova 
+```
+
+These logs look something like... 
+
+```
+INFO:root:Downloading OVA from http://build-squid.eng.vmware.com/build/mts/release/bora-21093855/publish/lin64/tkg_release/node/ova-ubuntu-2004-v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93.ova to 
 temp_ova_dir-NVZOBCZG
 
--  INFO:root:Importing OVA from http://build-squid.eng.vmware.com/build/mts/release/bora-21093855/publish/lin64/tkg_release/node/ova-ubuntu-2004-v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93.ova to /dc0/vm/.  This might take a while...
+INFO:root:Importing OVA from http://build-squid.eng.vmware.com/build/mts/release/bora-21093855/publish/lin64/tkg_release/node/ova-ubuntu-2004-v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93.ova to /dc0/vm/.
+
+This might take a while...
+```
+
 
 # TKG Bootstrap, Kind
 
