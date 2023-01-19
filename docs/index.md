@@ -430,7 +430,61 @@ At that point, our ephemeral kind cluster, which we used as a bootloader for the
 
 Ok, lets see how this all works:
 
-## MGMT: Install CAPI
+## MGMT: Order of components
+
+Before we show you the installation logs, lets look at the order of components as they come up:
+
+### MGMT ORDER 1: Kubernetes Core components and KAPP
+The first wave of components to come up is of course the core components of TKG.... kcm, etcd, apiserver, coredns, kube proxy, and kapp
+
+```
+kubectl get pods -A --context=tkg-mgmt-vc-admin@tkg-mgmt-vc --sort-by=.metadata.creationTimestamp
+NAMESPACE                           NAME                                                             READY   STATUS    RESTARTS      AGE
+kube-system                         kube-controller-manager-tkg-mgmt-vc-9tzbw-btchv                  1/1     Running   0             22m
+kube-system                         etcd-tkg-mgmt-vc-9tzbw-btchv                                     1/1     Running   0             22m
+kube-system                         kube-scheduler-tkg-mgmt-vc-9tzbw-btchv                           1/1     Running   0             22m
+kube-system                         kube-apiserver-tkg-mgmt-vc-9tzbw-btchv                           1/1     Running   0             22m
+kube-system                         coredns-5776487ffb-47llq                                         1/1     Running   0             22m
+kube-system                         coredns-5776487ffb-vgsjh                                         1/1     Running   0             22m
+kube-system                         kube-proxy-n8xnx                                                 1/1     Running   0             22m
+tkg-system                          kapp-controller-64c8bdfc86-lcq2p                                 2/2     Running   0             22m
+cert-manager                        cert-manager-84b664ffb4-lrqxw                                    1/1     Running   0             21m
+cert-manager                        cert-manager-cainjector-6cc99f4f85-tqfc9                         1/1     Running   0             21m
+cert-manager                        cert-manager-webhook-5b85b9b58d-46ckw                            1/1     Running   0             21m
+kube-system                         kube-proxy-76mkk                                                 1/1     Running   0             20m
+kube-system                         vsphere-cloud-controller-manager-z2r5b                           1/1     Running   0             19m
+kube-system                         vsphere-csi-node-gld59                                           3/3     Running   2 (17m ago)   19m
+kube-system                         vsphere-csi-controller-658b6b6557-zvdn2                          7/7     Running   0             19m
+kube-system                         vsphere-csi-node-v2qbx                                           3/3     Running   4 (17m ago)   19m
+kube-system                         metrics-server-6ff66f4589-v2lrl                                  1/1     Running   0             19m
+```
+#### MTMG ORDER 2: Antrea !? 
+ Would assume it would come on earlier (i.e. right after kapp and kube proxy). Otherwise, how else do things like cert-manager get IP addresses ? 
+```
+kube-system                         antrea-controller-74d4bb88ff-4vgk6                               1/1     Running   0             19m
+kube-system                         antrea-agent-6r8jq                                               2/2     Running   0             19m
+kube-system                         antrea-agent-pgzh5                                               2/2     Running   0             19m
+```
+#### MGMT ORDER 3: TKG Stuff and other CAPI stuff
+```
+secretgen-controller                secretgen-controller-7669575fdc-jbb82                            1/1     Running   0             19m
+tkg-system                          tanzu-capabilities-controller-manager-764dc744b4-lc527           1/1     Running   0             18m
+capi-system                         capi-controller-manager-8778fdfcb-srm6n                          1/1     Running   0             17m
+capi-kubeadm-bootstrap-system       capi-kubeadm-bootstrap-controller-manager-75dc58b698-mb992       1/1     Running   0             17m
+capi-kubeadm-control-plane-system   capi-kubeadm-control-plane-controller-manager-558bd599b4-d8454   1/1     Running   0             17m
+capv-system                         capv-controller-manager-bbc859947-2lxnd                          1/1     Running   0             17m
+caip-in-cluster-system              caip-in-cluster-controller-manager-7ff5d7dd44-vw5mn              1/1     Running   0             17m
+tkg-system                          object-propagation-controller-manager-5dbdcd6447-7znnd           1/1     Running   0             16m
+tkg-system-networking               ako-operator-controller-manager-557cdc564-qr5qf                  1/1     Running   0             16m
+tkg-system                          tanzu-addons-controller-manager-754b967d8c-sv2zx                 1/1     Running   0             15m
+tanzu-auth                          tanzu-auth-controller-manager-854798b9c-n7bj7                    1/1     Running   0             11m
+tkg-system                          tkr-status-controller-manager-684d5c7968-hm74k                   1/1     Running   0             11m
+tkg-system                          tkr-conversion-webhook-manager-fb45f8874-hmfh8                   1/1     Running   0             10m
+```
+
+We will add more dteails to the rationale above, soon.  For now, lets watch it happen in real time.
+
+## MGMT 1: Create the ControlPlane Nodes
 
 Now, we're going to start creating what will be the *real* Management Cluster..... 
 
@@ -461,7 +515,7 @@ Now, we're going to start creating what will be the *real* Management Cluster...
     [2023-01-10T19:54:33.277Z] Saving management cluster kubeconfig into /home/kubo/.kube/config
 ```
 
-## MGMT: Install KAPP
+## MGMT 2: Install KAPP
 
 We don't put Kapp in a ClusterResourceSet (although we used to at one time).  Instead, we manually add it to
 a cluster as an inception component. 
@@ -480,6 +534,7 @@ a cluster as an inception component.
     [2023-01-10T19:55:12.878Z] Creating CustomResourceDefinition="providers.clusterctl.cluster.x-k8s.io"
 ```
 
+## MGMT 3: Install CAPI
 
 We now have some code from cluster API that we call out to : cluster-api/cmd/clusterctl/client/init.go: 
 ```
@@ -599,7 +654,7 @@ And eventually, we get the same success message"
     [2023-01-10T20:09:27.780Z]  Added installed package 'tkg-pkg'waiting for package: tkg-pkg
 ```
 
-# MAGIC PART: tkg-pkg and "Waiting for package" hot loop 
+# MGMT 4: MAGIC PART: tkg-pkg and "Waiting for package" hot loop 
 
 Just like the kind cluster.  We let `tkg-pkg` pollute our cluster with all of our required management packages.   Interesting to note here that
 packages we install are specific to the infrastructure provider.  So, we must either have `ako-operator` on all clouds (probably not), or, we have a different version of `tkg-pkg` meta-package repo that is used depending on if your azure or AWS.
