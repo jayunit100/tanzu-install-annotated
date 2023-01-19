@@ -371,6 +371,7 @@ Below we'll "wait for package", i.e. we'll wait for individual packages to come 
   waiting for package: tkg-clusterclass
   waiting for resource tanzu-cliplugins of type *v1alpha1.PackageInstall to be up and running
   waiting for package: tkg-clusterclass-vsphere
+
   waiting for package: tkr-service
   waiting for resource tanzu-framework of type *v1alpha1.PackageInstall to be up and running
   waiting for package: tkr-source-controller
@@ -429,7 +430,7 @@ At that point, our ephemeral kind cluster, which we used as a bootloader for the
 
 Ok, lets see how this all works:
 
-## Create the CAPI object
+## MGMT: Install CAPI
 
 Now, we're going to start creating what will be the *real* Management Cluster..... 
 
@@ -458,6 +459,13 @@ Now, we're going to start creating what will be the *real* Management Cluster...
     [2023-01-10T19:54:33.277Z] getting secret for cluster
     [2023-01-10T19:54:33.277Z] waiting for resource tkg-mgmt-vc-kubeconfig of type *v1.Secret to be up and running
     [2023-01-10T19:54:33.277Z] Saving management cluster kubeconfig into /home/kubo/.kube/config
+```
+
+## MGMT: Install KAPP
+
+We don't put Kapp in a ClusterResourceSet (although we used to at one time).  Instead, we manually add it to
+a cluster as an inception component. 
+```
     [2023-01-10T19:54:33.277Z] Installing kapp-controller on management cluster...
     [2023-01-10T19:54:33.277Z] User ConfigValues File: /tmp/2323403141.yaml
     [2023-01-10T19:54:33.277Z] Kapp-controller values-file: /tmp/4151289121.yaml
@@ -480,7 +488,19 @@ We now have some code from cluster API that we call out to : cluster-api/cmd/clu
 	// a bootstrap provider and a control-plane provider (if not already explicitly requested by the user)
 	log.Info("Fetching providers")
 ```
-We can see the result of this command below: 
+
+We can see the result of this command below.  Note that when we "fetch providers", Cluster API can get providers:
+- from the internet (github repo for CAPI has a canonical set of default providers, and those are used for upstream e2e testing of CAPI).
+- from a local directory (in TKG, the "providers" for CAPI are pre-packaged and unzipped from the management cluster plugin).
+  
+So, when we "fetch the providers", we are reading from a local directory of "provider" yamls.  Each provider implements the core
+functionality of CAPI required for a given cloud.  For example:
+- the "kubeadm bootstrap provider" writes a secret with cloud init bootstrapping data for VMs, which allows them to join the cluster.
+- the "infrastructure-provider" (a list of them is here https://cluster-api.sigs.k8s.io/reference/providers.html) installs (in this case) the
+capv-controller-manager, which reads "Machine" resources, and then makes "VsphereMachine" resource objects (capv then makes API calls
+to vsphere to create these objects).
+
+
 ```
     [2023-01-10T19:55:14.880Z] Fetching providers
 ```
@@ -663,6 +683,19 @@ Now, we get ready to migrate the management cluster to VSphere.
     [2023-01-10T20:09:27.781Z]     tkg_cluster_role: workload
     [2023-01-10T20:09:27.781Z]     identity_management_type: none
     [2023-01-10T20:09:27.781Z] ---
+```
+The remainder of the YAML has "ClusterBootstrap" information, including the TKR used to create your cluster.  The ClusterBootstrap resource
+defines all the packages that need to be installed on your management cluster once it starts up.  This is a TKG specific construct, it tellsTKG things like
+- `spec.cni.refName`: what CNI you are using, (i.e. Antrea or Calico)
+- CalicoConfig, with `spec.calico.config` and how youll configure it, for example fields like `vethMTU:`, or `vxlan` vs `bgp` mode.
+- what additional packages you want to install (i.e. `pinniped`, `metrics-server`, ...)
+- KappControllerConfig (where you can specify what namespace kapp runs in and so on).
+This bootstrap is made for you when you setup TKG the first time.
+
+Note that, if you're a TKG 1.6 user, this is a new object for you: It represents the fact that you're cluster configuration no longer is defaulted
+via YTT, but rather, as a Kubernetes object stored inside the Kubernetes API Server.  Thus, you can mix and match objects referenced by your
+cluster bootstrap template without having to do a large synchronous "YTT creation" step, as was once done in early versions of TKG.
+```
     [2023-01-10T20:09:27.781Z] apiVersion: run.tanzu.vmware.com/v1alpha3
     [2023-01-10T20:09:27.781Z] kind: ClusterBootstrap
     [2023-01-10T20:09:27.781Z] metadata:
