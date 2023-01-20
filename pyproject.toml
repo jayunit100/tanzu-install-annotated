@@ -1,6 +1,6 @@
 [build-system]
 # todo, not using pydownx or mkdocs-pydownx yet. want to add mermaid some day though.
-requires = ["flit_core >=3.2,<4","pymdownx","mkdocs-pymdownx-material-extras"]
+requires = ["flit_core >=3.2,<4","pymdownx","mkdocs-pymdownx-material-extras","mkdocs-mermaid2-plugin","mkdocs-material"]
 build-backend = "flit_core.buildapi"
 
 [project]

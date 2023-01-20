@@ -5,6 +5,15 @@ with code snippets inside of tanzu-framework and cluster-api.
 
 [Contributors Welcome](https://github.com/jayunit100/tanzu-install-annotated) !!!
 
+```mermaid
+graph LR
+  A[Start] --> B{Error?};
+  B -->|Yes| C[Hmm...];
+  C --> D[Debug];
+  D --> B;
+  B ---->|No| E[Yay!];
+```
+
 ## TKG Client and Kind Bootstrapping
 
 Curling down the TKG bom.  This only happens on prem.  But its a starting point that is worth noting.
@@ -13,7 +22,6 @@ Curling down the TKG bom.  This only happens on prem.  But its a starting point 
 ```
 
 In the real world, you'll get BOM components (like the OVAs you upload, or the TKG client) from https://customerconnect.vmware.com/downloads/details?downloadGroup=TKG-160&productId=988&rPId=93384, or a similar url.
-
 We now will check tanzu's and update the plugins: 
 
 ```
@@ -654,7 +662,7 @@ And eventually, we get the same success message"
     [2023-01-10T20:09:27.780Z]  Added installed package 'tkg-pkg'waiting for package: tkg-pkg
 ```
 
-# MGMT 4: MAGIC PART: tkg-pkg and "Waiting for package" hot loop 
+## MGMT 4: tkg-pkg and "Waiting for package" hot loop 
 
 Just like the kind cluster.  We let `tkg-pkg` pollute our cluster with all of our required management packages.   Interesting to note here that
 packages we install are specific to the infrastructure provider.  So, we must either have `ako-operator` on all clouds (probably not), or, we have a different version of `tkg-pkg` meta-package repo that is used depending on if your azure or AWS.

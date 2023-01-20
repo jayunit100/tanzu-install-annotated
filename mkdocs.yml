@@ -1,2 +1,5 @@
 site_name: TKG Annotated
-
+theme:
+  name: material
+plugins:
+    - search
