@@ -12,10 +12,12 @@ Now lets see what happens when we bring up the workload cluster
 ```
 
 
-Now we create our first workload cluster: 
+We create our first workload cluster like this:
 
 ```
-tanzu kubernetes cluster create tkg-vc-antrea -v 9 -f tkg-vc-antrea.yaml --tkr v1.24.9---vmware.1-tkg.1-rc.2
+tanzu kubernetes cluster create \	
+	tkg-vc-antrea -v 9 -f tkg-vc-antrea.yaml \
+		--tkr v1.24.9---vmware.1-tkg.1-rc.2
 ```
 
 This is normal, b/c we dont usually install pinniped in testbeds.
