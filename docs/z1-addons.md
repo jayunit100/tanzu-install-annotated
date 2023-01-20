@@ -1,4 +1,4 @@
-# (Kind) Addons
+# Addons_ctrl
 
 These logs show us what the (kind) addons controller manager does when we run initialization of a management cluster is coming up.
 
