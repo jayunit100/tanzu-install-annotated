@@ -47,3 +47,27 @@ ig"
 I0120 14:41:40.410384       1 controlr"="azurediskcsiconfig" "controllerGroup"="csi.tanzu.vmware.com" "controllerKind"="AzureDiskCSIConfig"
 I0120 14:41:40.419582       1 logr.go:261] controller-runtime/certwatcher "msg"="Updat41:40.424565       1 controller.go:185]  "msg"="Starting EventSource" "controller"="cluster" "controllerGroup"="cluster.x-k8s.io" "controllerKind"="Cluster" "source"="kind source: *v1alpha3.TanzuKubernetesRelease"
 ```
+
+## Kind is bootstrapping stuff for us
+
+One thing to note is that... after a Management Cluster is up. It appears it installs antrea for us.  This means that,  the addons controller manager
+in our kind cluster is in fact responsible for bootstrapping the management clusters CNI... 
+
+```
+
+I0120 14:45:19.118970       1 cluster_metadata_controller.go:107] ClusterMetadataReconciler "msg"="Reconciling cluster" "cluster-name"="tkg-mgmt-vc" "cluster-ns"="tkg-system"                                                                   E0120 14:45:19.173384       1 controller.go:326]  "msg"="Reconciler error" "error"="cannot get the bom configuration: ConfigMap \"tkg-bom-v2.1.0-rc.3\" not found" "cluster"={"name":"tkg-mgmt-vc","namespace":"tkg-system"} "controller"="cluste
+rMetadata-controller" "controllerGroup"="cluster.x-k8s.io" "controllerKind"="Cluster" "name"="tkg-mgmt-vc" "namespace"="tkg-system" "reconcileID"="c11fe81e-29f9-4f61-afec-52c19831a087"
+
+I0120 14:45:23.644028       1 clusterbootstrap_controller.go:170] ClusterBootstrapController "msg"="Reconciling cluster" "cluster-name"="tkg-mgmt-vc" "cluster-ns"="tkg-system"
+```
+
+### Here is where antrea is reconciled... 
+
+```
+I0120 14:45:23.675437       1 logr.go:261] antreaconfig-resource "msg"="validate update" "name"="tkg-mgmt-vc-antrea-package"
+I0120 14:45:23.709431       1 clusterbootstrap_controller.go:1377] ClusterBootstrapController "msg"="setting proxy and network configurations in Cluster annotation" "cluster-name"="tkg-mgmt-vc" "cluster-ns"="tkg-system" "tkg.tanzu.vmware.com
+
+/skip-tls-verify"="" "tkg.tanzu.vmware.com/tkg-http-proxy"="" "tkg.tanzu.vmware.com/tkg-https-proxy"="" "tkg.tanzu.vmware.com/tkg-ip-family"="" "tkg.tanzu.vmware.com/tkg-no-proxy"=null "tkg.tanzu.vmware.com/tkg-proxy-ca-cert"=""
+```
+
+

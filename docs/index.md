@@ -127,6 +127,7 @@ tanzu management-cluster create  --yes -v 9 --deploy-tkg-on-vSphere7 -f tkg-mgmt
  Checking if VSPHERE_CONTROL_PLANE_ENDPOINT  is already in use
 ```
 
+
 ### Now the (big) InitRegion() method kicks off
 
 ```
@@ -412,6 +413,34 @@ Carrying on
 [2023-01-10T19:50:48.605Z] Management cluster config file has been generated and stored at: '/home/kubo/.config/tanzu/tkg/clusterconfigs/tkg-mgmt-vc.yaml'
 [2023-01-10T19:50:48.605Z] Checking Tkr v1.24.9---vmware.1-tkg.1-rc.2 in bootstrap cluster...
 [2023-01-10T19:50:48.605Z] waiting for resource v1.24.9---vmware.1-tkg.1-rc.2 of type *v1alpha3.TanzuKubernetesRelease to be up and running
+```
+
+All in all, the payload on our Kind cluster is below.  Note that instead of *antrea* we actually used `kindnet`... 
+
+```
+root@tkg-kind-cf5acj16tfr0jpgkuofg-control-plane:/# kubectl get pods -A --sort-by=.metadata.creationTimestamp
+NAMESPACE                           NAME                                                                  READY   STATUS    RESTARTS   AGE
+kube-system                         kube-controller-manager-tkg-kind-cf5acj16tfr0jpgkuofg-control-plane   1/1     Running   0          3m20s
+kube-system                         etcd-tkg-kind-cf5acj16tfr0jpgkuofg-control-plane                      1/1     Running   0          3m18s
+kube-system                         kube-scheduler-tkg-kind-cf5acj16tfr0jpgkuofg-control-plane            1/1     Running   0          3m18s
+kube-system                         kube-apiserver-tkg-kind-cf5acj16tfr0jpgkuofg-control-plane            1/1     Running   0          3m18s
+kube-system                         kube-proxy-fmb2s                                                      1/1     Running   0          3m5s
+kube-system                         kindnet-wp255                                                         1/1     Running   0          3m5s
+kube-system                         coredns-77d74f6759-hs8xw                                              1/1     Running   0          3m5s
+kube-system                         coredns-77d74f6759-rmxrj                                              1/1     Running   0          3m5s
+local-path-storage                  local-path-provisioner-6b84c5c67f-pjzwx                               1/1     Running   0          3m5s
+tkg-system                          kapp-controller-64c8bdfc86-4gcqc                                      2/2     Running   0          2m55s
+cert-manager                        cert-manager-webhook-5b85b9b58d-7wd84                                 1/1     Running   0          2m26s
+cert-manager                        cert-manager-84b664ffb4-gkvgn                                         1/1     Running   0          2m26s
+cert-manager                        cert-manager-cainjector-6cc99f4f85-fjn8k                              1/1     Running   0          2m26s
+capi-system                         capi-controller-manager-8778fdfcb-22lx4                               1/1     Running   0          2m8s
+capi-kubeadm-bootstrap-system       capi-kubeadm-bootstrap-controller-manager-75dc58b698-nnrnj            1/1     Running   0          2m6s
+capi-kubeadm-control-plane-system   capi-kubeadm-control-plane-controller-manager-558bd599b4-jx5bk        1/1     Running   0          2m3s
+capv-system                         capv-controller-manager-bbc859947-qlb59                               1/1     Running   0          2m
+caip-in-cluster-system              caip-in-cluster-controller-manager-7ff5d7dd44-rlxrh                   1/1     Running   0          118s
+tkg-system                          object-propagation-controller-manager-76df74cd4d-bswvm                1/1     Running   0          73s
+tkg-system-networking               ako-operator-controller-manager-b5f9c68b9-t7g9c                       1/1     Running   0          55s
+tkg-system                          tanzu-featuregates-controller-manager-688985774b-7tf9x                1/1     Running   0          11s
 ```
 
 # TKG Management Cluster Creation (post-kind bootstrapping)
