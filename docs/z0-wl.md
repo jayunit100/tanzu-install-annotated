@@ -1,4 +1,4 @@
-# WL cluster up
+# WL
 
 Now lets see what happens when we bring up the workload cluster
 
