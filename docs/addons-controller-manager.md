@@ -1,4 +1,4 @@
-# What does the addons controller manager do ? 
+# Addons Ctrl 
 
 
 
