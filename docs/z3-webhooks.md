@@ -1,52 +1,5 @@
 # Webhooks
 
-```
-                         ┌──────────┐
-                         │          │
-                         │  user    ├─────────┐
-                         │          │         │
-                         └──────────┘         │
-                                              │ Creates a MachineDeployment (or TKG creates one)
-                                              │
-                                              │ 1. User can now make CAPI objects
-                                              │
-                                              │
-                                            ┌─▼─────────────┐
-                                            │               │
-0.     kind bootstraps...                   │               │ <-- anytime you make a cluster a webhook will
-                     ┌─────────────────────►│    APIServer  │     be called from your APIServer that points back
-Capi is installed    │                      │               │     to CAPI pods... you can see these w/ kubectl get validatingwebhook
-                     │                      │               │     and kubectl get mutatingwebhook.  TKG makes alot of these, and
-- CAPI pods          │                      └──┬────────────┘     alot of the defaults you get for free are b/c of mutating webhooks  
-- Mutating hooks     │                         │                  which "hydrate" your objects when you send them to the APIServer... 
-- Validating hooks that point back to CAPIServices are put on the APISErver... 
-            ┌────────┴───┐                     │
-            │            │                     │
-            │            │                     │
-            │   CAPI Pod │                     │   3. APIServer calls the MachineDeployment Webhook
-      ┌─────►            │                     │
-      │     │            │                     │      It might be a mutating or validating hook.
-      │     └───┬────────┘                     │
-      │         │                              │      IF it's validating, it's called after any mutating hooks
-      │      ┌──┴───────────┐                  │
-      │      │ capi logic   │                  │
-      │      ├──────────────┤                  │
-      │      ├──────────────┴───────────────┐  │
-      │      │ webhook for machine          │  │          ┌───────────────┐
-      │      ├──────────────────────────────┘  │          │  Certmanager  │
-      │      │ webhook for machinedeployment◄──┘          │               │
-      │      └──────────────────────────────┘             │               │
-      │                                                   └───┬───────────┘
-      │                                                       │
-      │                                                       │
-      │                                                       │
-      │         Don't forget certmanager ! Certmanager has    │
-      │         to give certifiactes to these webhooks        │
-      │                                                       │
-      │                                                       │
-      └───────────────────────────────────────────────────────┘
-```
-
 Looking at a TKG Cluster, we find a *topology* field....
 
 ```
@@ -93,6 +46,53 @@ There are several key value pairs that are given to a ClusterClass cluster topol
 When a user creates a new TKG cluster, they dont memorize the path and the MOID of it the VMs they want CAPV to use.  Alternatively, they specify a few high level parameters (i.e. ubuntu, 2004, ...) and TKG figures out, for them... what exact OS Image (including the path  on vsphere) shoudl be sent to their underlying MachineDeployment and KubeAdmControlplane objects. 
 
 Let's learn how the last field , `TKR_DATA` is populated with specific VSphere OVA paths.
+
+## A Quick Sketch
+
+Before we dive into the details of webhooks, lets take a look at some of the webhooks in CAPI and 
+
+```
+                         ┌──────────----------+
+                         │  tanzu cluster     |
+                         │  create            |─────────-----------> Cluster.topology = MyClusterClass
+                         │  --tkr=xyz         |
+                         +--------------------+
+                                              │    Creates a Cluster (or TKG creates one)
+                                              │
+                                              │       1. User can now make CAPI objects
+                                              │
+                                              │                                   +---------------------------------+ 
+                                            ┌─▼─────────────+-------------------->| webhook for tkr-vsphere-resolver|
+                                            |               |                     | running in tkr-resolver pod     |
+                                            │               │                     +---------------------------------+
+0. kind bootstraps...                       │               │ <-- anytime you make a cluster a webhook will
+                     ┌─────────────────────►│    APIServer  │     be called from your APIServer that points back
+Capi is installed    │                      │               │     to CAPI pods... you can see these w/ kubectl get validatingwebhook
+                     │                      │               │     and kubectl get mutatingwebhook.  TKG makes alot of these, and
+- CAPI pods          │                      └──┬────────────┘     alot of the defaults you get for free are b/c of mutating webhooks  
+- Mutating hooks     │                         │                  which "hydrate" your objects when you send them to the APIServer... 
+- Validating hooks that point back to CAPIServices are put on the APISErver... 
+            ┌────────┴───┐                     │
+            │            │                     │
+            │            │                     │
+            │   CAPI Pod │                     │   3. ClusterClass results in MD and KubeadmCtrlPlane creations... 
+      ┌─────+            │                     │.     Those objects in turn get funneled through other webhooks...
+      │     │            │                     │      Its webhooks all the way down...
+      │     └───┬────────┘                     │
+      │         │                              │      Note that Validating Webhooks are called AFTER Mutating Webhooks.
+      │      ┌──┴───────────┐                  │
+      │      │ capi logic   │                  │
+      │      ├──────────────┤                  │
+      │      ├──────────────┴───────────────┐  │
+      │      │ webhook for machine          │  │          ┌───────────────┐
+      │      ├──────────────────────────────┘  │          │  Certmanager  │
+      │      │ webhook for machinedeployment◄──┘          │               │
+      │      └──────────────────────────────┘             │               │
+      │                                                   └───┬───────────┘
+      │         Don't forget certmanager ! Certmanager has    │
+      │         to give certifiactes to these webhooks        │
+      └───────────────────────────────────────────────────────┘
+```
 
 ## What is in TKR_DATA 
 
@@ -336,3 +336,4 @@ The function that is triggered, ultimately, which joins data from vsphere into t
  
 The MutatingWebhook pattern is used by TKG in many places.  One example, is how we mutating incoming Cluster definitions to reference specific VSphere OVA templates, including their precise MOID and path values, before a new CAPI/CAPV cluster is created.  This ensures that the capv-controller-manager always has a usable and correct VsphereMachineTemplate, which points to a well defined OS Template.
  
+
