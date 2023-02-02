@@ -282,9 +282,10 @@ The function that is triggered, ultimately, which joins data from vsphere into t
         // Write the data out to our OSImage structures 
         return "", cw.processAndSetResult(result, cluster, cpData, mdDatas)
 }
+
 ```
 
-## Conclusion
+# Conclusion
  
 The MutatingWebhook pattern is used by TKG in many places.  One example, is how we mutating incoming Cluster definitions to reference specific VSphere OVA templates, including their precise MOID and path values, before a new CAPI/CAPV cluster is created.  This ensures that the capv-controller-manager always has a usable and correct VsphereMachineTemplate, which points to a well defined OS Template.
  
