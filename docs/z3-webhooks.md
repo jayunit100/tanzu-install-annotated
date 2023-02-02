@@ -220,7 +220,9 @@ webhooks:
   - v1beta1
   clientConfig:
 ```
+
 The first thing we see, is a `service`.  This service corresponds to a namespace and a path: 
+
 ```
    service:
       name: tkr-vsphere-resolver-webhook-service
@@ -228,11 +230,12 @@ The first thing we see, is a `service`.  This service corresponds to a namespace
       path: /resolve-template
       port: 443
 ```
-This means that the APIServer can access "thing that mutates, and resolves vsphere tkr info" at 
-`https://my-k8s-api-server:443/tkg-system/tkr-vsphere-resolver-webhook-service/resolve-template`. 
+
+This means that the APIServer can access "thing that mutates, and resolves vsphere tkr info" at  `https://my-k8s-api-server:443/tkg-system/tkr-vsphere-resolver-webhook-service/resolve-template`. 
 
 Now, we ask *WHEN* will the APIServer actually call this API? Whenever a *cluster* is *CREATED* or *UPDATED*.  We can see this in the
 *rules* section below:
+
 ```
   ...
   rules:
@@ -255,15 +258,15 @@ takes more then 10 seconds to add the TKR_BOM field into an incoming cluster def
   sideEffects: None
   timeoutSeconds: 10
 ```
+
+### Wheres the code (TODO) 
  
- ### Wheres the code (TODO) 
+Ok so weve really looked at the high level definition.  But what is the webhook DOING once this web service is called by the APIServer when you made your `Cluster`? 
  
- Ok so weve really looked at the high level definition.  But what is the webhook DOING once this web service is called by the APIServer when you made your `Cluster`? 
+The code for all of this is in tkg/vsphere-template-resolver/template/resolver.go, which lives in tanzu-framework. 
  
- The code for all of this is in tkg/vsphere-template-resolver/template/resolver.go, which lives in tanzu-framework. 
- 
- The function that is triggered, ultimately, which joins data from vsphere into the `Cluster` object, is shown here... 
- ```
+The function that is triggered, ultimately, which joins data from vsphere into the `Cluster` object, is shown here... 
+```
  func (cw *Webhook) resolve(ctx context.Context, cluster *clusterv1.Cluster) (string, error) {
         topology := cluster.Spec.Topology
         ... 
@@ -279,10 +282,9 @@ takes more then 10 seconds to add the TKR_BOM field into an incoming cluster def
         // Write the data out to our OSImage structures 
         return "", cw.processAndSetResult(result, cluster, cpData, mdDatas)
 }
- ```
+```
+
+## Conclusion
  
- ## Conclusion
- 
- The MutatingWebhook pattern is used by TKG in many places.  One example, is how we mutating incoming Cluster definitions to reference
- specific VSphere OVA templates, including their precise MOID and path values, before a new CAPI/CAPV cluster is created.  This ensures that the capv-controller-manager always has a usable and correct VsphereMachineTemplate, which points to a well defined OS Template.
+The MutatingWebhook pattern is used by TKG in many places.  One example, is how we mutating incoming Cluster definitions to reference specific VSphere OVA templates, including their precise MOID and path values, before a new CAPI/CAPV cluster is created.  This ensures that the capv-controller-manager always has a usable and correct VsphereMachineTemplate, which points to a well defined OS Template.
  
