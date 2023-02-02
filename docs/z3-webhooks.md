@@ -1,5 +1,7 @@
 # Webhooks
 
+
+
 Looking at a TKG Cluster, we find a *topology* field....
 
 ```
@@ -43,7 +45,9 @@ There are several key value pairs that are given to a ClusterClass cluster topol
     - name: TKR_DATA
 ```
 
-Let's learn how the last field , TKR_DATA is added to a cluster... 
+When a user creates a new TKG cluster, they dont memorize the path and the MOID of it the VMs they want CAPV to use.  Alternatively, they specify a few high level parameters (i.e. ubuntu, 2004, ...) and TKG figures out, for them... what exact OS Image (including the path  on vsphere) shoudl be sent to their underlying MachineDeployment and KubeAdmControlplane objects. 
+
+Let's learn how the last field , `TKR_DATA` is populated with specific VSphere OVA paths.
 
 ## What is in TKR_DATA 
 
@@ -73,10 +77,47 @@ The TKR_DATA object in a clusters spec.topology fields looks like this:
             pause:
               imageTag: "3.7"
             version: v1.24.9+vmware.1
-            ...
+```
+The above fields are relatively "easy" to resolve, because theyre just K8s objects... But the Vsphere information
+with the specific OVA `<VERSION>` information is hidden under VSphere APIs.  Thus, we have a controller whose job is:
+- To Query VSphere
+- Find specific OVA Image template names
+- Add information about those template names, and MOIDs, into the `osImageRef` object inside of the YAML definition for the `TKR_DATA` field:  
+```
+        labels:
+            image-type: ova
+            os-arch: amd64
+            os-name: ubuntu
+            os-type: linux
+            os-version: "2004"
+            ova-version: v1.24.9---vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
+            run.tanzu.vmware.com/os-image: v1.24.9---vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
+            run.tanzu.vmware.com/tkr: v1.24.9---vmware.1-tkg.1
+          osImageRef:
+            moid: vm-51
+            template: /dc0/vm/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1
+            version: v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
+```
+Looking just a few lines down in the same cluster object, we see that the `machineDeployment` definition, in fact, will reference the 
+- image-type: ova
+- os-name: ubuntu
+fields:
+```
+            moid: vm-51
+            template: /dc0/vm/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1
+            version: v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
+    version: v1.24.9+vmware.1
+    workers:
+      machineDeployments:
+      - class: tkg-worker
+        metadata:
+          annotations:
+            # HERE !!!
+            run.tanzu.vmware.com/resolve-os-image: image-type=ova,os-name=ubuntu
 ```
 
-Webhooks are clearly a critical part of how TKG adds product specific logic into Cluster API.  So lets see how they work and how they are installed.
+When new CAPI MachineDeployments are created.    
+
 
 # Webhook
 
@@ -141,31 +182,28 @@ tkg/vsphere-template-resolver/main.go:
       &webhook.Admission{
 ```
 
-## How does this workin again ? 
+## How does this relate to a Cluster object?
 
-At a high level, lets imagine what happens in TKG when you make a `Cluster` object at the API level (the tanzu cli normally makes this object for you, but in the end
-it ultimately makes a `Cluster` object).  That said, in TKG you *can* make clusters using raw `kubectl`... so this example isnt totally contrived.
 
-- You make a `Cluster`
-- Webhook sees what you tried to do.
-- Webhook adds the TKR data to your `Cluster`
-- Api server adds the `Cluster` object to `etcd`
+- You install a tanzu management cluster
+- The tanzu cli, during installation, creates a K8s APIServer.
+- Then the tanzu cli adds CAPI controllers to the APIServer, along with webhook definitions which point to those controllers, so that any `Cluster` objects being created can be processed by CAPI before they are stored in the Kubernetes APIServer.
+  - one of these webhooks is the `tkr-vsphere-resolver` webhook definition.
+- You run `tanzu cluster create... --tkr ..."`, making a new workload cluster. 
+- A `Cluster` object is created for you by tanzu and sent to the APIServer as YAML.
+- The APIServer sees that theres a Cluster object, and so immediately calls out to the `tkr-vsphere-resolver` Mutating Cluster Webhook to finish creating it.
+- Webhook goes off and talkes to Vsphere, to query the `<VERSION>` values for all OS Templates
+- It then writes this data into the TKR_DATA field 
+- Api server recieves the "mutated" `Cluster` struct, now having fine grained OVA path info, and stores the `Cluster` object to `etcd`
+- Now, the MachindDeployment and KubeadmControlPlane objects (which will get created by CAPI), will have well defined images, and your nodes will come up.
 
-These are generic kubernetes constructs that allow people to dynamically validate
-API calls, for example, by: 
-- enforcing simple things like "all new Deployments have a similar naming convention", or 
-- enforcing complex things, like "The TKR_BOM" field must be filled in when TKG Cluster installations happen.
+### What about other types of hooks ? 
 
-### BUT There is another NEW kind of hook being proposed upstream: A LIFECYCLE hook.  
-- This is essentially a fine grained, RPC like interaction
-- cluster API can "call out" to other components when certain "things" are happening.
-
-This hasnt been implemented yet, but it's worth knowing that, someday, there may be finer grained pluggability that will be built
-into cluster API over time.
+If this feels a little too asnychronous for you, then never fear, for finer grained configuration of CAPI, there are new mechanisms being researched to "plug out" to other controllers for precise and immediate feedback while doing a complex infrasttructure installation. These are currently called *lifecycle hooks*.  But theyre not a discussion for today.
 
 ## A Mutating Webhook example
 
-Lets take a mutating webhook.  In this case, we'll look at the `TKR-vsphere-resolver`.
+Anyways, back to our mutating webhook.  Let's look at it...  
 
 ```
 apiVersion: admissionregistration.k8s.io/v1
@@ -222,8 +260,29 @@ takes more then 10 seconds to add the TKR_BOM field into an incoming cluster def
  
  Ok so weve really looked at the high level definition.  But what is the webhook DOING once this web service is called by the APIServer when you made your `Cluster`? 
  
+ The code for all of this is in tkg/vsphere-template-resolver/template/resolver.go, which lives in tanzu-framework. 
+ 
+ The function that is triggered, ultimately, which joins data from vsphere into the `Cluster` object, is shown here... 
+ ```
+ func (cw *Webhook) resolve(ctx context.Context, cluster *clusterv1.Cluster) (string, error) {
+        topology := cluster.Spec.Topology
+        ... 
+        mdDatas, err := getMDDatas(cluster)
+        if err != nil {
+                return "", err
+        }
+        ovaTemplateQueries := collectOVATemplateQueries(append(mdDatas, cpData))
+        ...
+        // Find the OVAs template paths in vsphere that will be used to make new CAPV VMs
+        result := cw.Resolver.Resolve(ctx, vSphereContext, query, vc)
+        ... 
+        // Write the data out to our OSImage structures 
+        return "", cw.processAndSetResult(result, cluster, cpData, mdDatas)
+}
  ```
  
- ```
+ ## Conclusion
  
+ The MutatingWebhook pattern is used by TKG in many places.  One example, is how we mutating incoming Cluster definitions to reference
+ specific VSphere OVA templates, including their precise MOID and path values, before a new CAPI/CAPV cluster is created.  This ensures that the capv-controller-manager always has a usable and correct VsphereMachineTemplate, which points to a well defined OS Template.
  
