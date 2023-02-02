@@ -1,6 +1,51 @@
 # Webhooks
 
-
+```
+                         ┌──────────┐
+                         │          │
+                         │  user    ├─────────┐
+                         │          │         │
+                         └──────────┘         │
+                                              │ Creates a MachineDeployment (or TKG creates one)
+                                              │
+                                              │ 1. User can now make CAPI objects
+                                              │
+                                              │
+                                            ┌─▼─────────────┐
+                                            │               │
+0.     kind bootstraps...                   │               │ <-- anytime you make a cluster a webhook will
+                     ┌─────────────────────►│    APIServer  │     be called from your APIServer that points back
+Capi is installed    │                      │               │     to CAPI pods... you can see these w/ kubectl get validatingwebhook
+                     │                      │               │     and kubectl get mutatingwebhook.  TKG makes alot of these, and
+- CAPI pods          │                      └──┬────────────┘     alot of the defaults you get for free are b/c of mutating webhooks  
+- Mutating hooks     │                         │                  which "hydrate" your objects when you send them to the APIServer... 
+- Validating hooks that point back to CAPIServices are put on the APISErver... 
+            ┌────────┴───┐                     │
+            │            │                     │
+            │            │                     │
+            │   CAPI Pod │                     │   3. APIServer calls the MachineDeployment Webhook
+      ┌─────►            │                     │
+      │     │            │                     │      It might be a mutating or validating hook.
+      │     └───┬────────┘                     │
+      │         │                              │      IF it's validating, it's called after any mutating hooks
+      │      ┌──┴───────────┐                  │
+      │      │ capi logic   │                  │
+      │      ├──────────────┤                  │
+      │      ├──────────────┴───────────────┐  │
+      │      │ webhook for machine          │  │          ┌───────────────┐
+      │      ├──────────────────────────────┘  │          │  Certmanager  │
+      │      │ webhook for machinedeployment◄──┘          │               │
+      │      └──────────────────────────────┘             │               │
+      │                                                   └───┬───────────┘
+      │                                                       │
+      │                                                       │
+      │                                                       │
+      │         Don't forget certmanager ! Certmanager has    │
+      │         to give certifiactes to these webhooks        │
+      │                                                       │
+      │                                                       │
+      └───────────────────────────────────────────────────────┘
+```
 
 Looking at a TKG Cluster, we find a *topology* field....
 
@@ -259,8 +304,10 @@ takes more then 10 seconds to add the TKR_BOM field into an incoming cluster def
   timeoutSeconds: 10
 ```
 
-### Wheres the code (TODO) 
- 
+### Wheres the code ? 
+
+The code that does the work here is https://github.com/vmware-tanzu/tanzu-framework/blob/main/tkg/vsphere-template-resolver/template/resolver.go. 
+
 Ok so weve really looked at the high level definition.  But what is the webhook DOING once this web service is called by the APIServer when you made your `Cluster`? 
  
 The code for all of this is in tkg/vsphere-template-resolver/template/resolver.go, which lives in tanzu-framework. 
