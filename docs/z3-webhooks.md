@@ -302,7 +302,7 @@ takes more then 10 seconds to add the TKR_BOM field into an incoming cluster def
   timeoutSeconds: 10
 ```
 
-### Wheres the code ? 
+### How the code for the "Vsphere Template Resolver" Mutating Webhook ties this all together ... 
 
 The code that does the work here is https://github.com/vmware-tanzu/tanzu-framework/blob/main/tkg/vsphere-template-resolver/template/resolver.go. 
 
