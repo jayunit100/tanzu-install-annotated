@@ -1,5 +1,15 @@
-
 # HTTP_PROXY
+
+## Who needs the HTTP PROXY ? 
+
+When running TKG, the HTTP_PROXY variable is used for restricted internet environments.
+- Containerd pulls image through a proxy that is allowed to access the outside world.
+- Kubelet talks to the cloud control plane (if running the in-tree CPI, which we do for Azure and AWS) through an HTTP_PROXY
+- Kapp Controller pulls down package informations through registries via the HTTP_PROXY
+
+There shouldnt be any other pods (at least, not that i know of) or processes that need to use this HTTP_PROXY.
+
+## What happens to TKG's configuration, when we set HTTP_PROXY ? 
 
 IF we set the HTTP_PROXY variable when creating a cluster like so... 
 
