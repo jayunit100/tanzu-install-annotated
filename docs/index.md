@@ -261,8 +261,10 @@ That means, teaching it CAPI.
 
 ### Tell kind about CAPI 
 
-We now see in the logs, something like this.  At this point, tanzu cli is now `clusterctl`, internally, and clusterctl is doing a bunch
-of magic to turn our kind cluster into a cluster API Management cluster... this means... just adding a bunch of containers, provider CRDs, and so on...
+At this point, 
+- tanzu cli is now `clusterctl`, internally, 
+- clusterctl is doing a bunch of magic to turn our kind cluster into a cluster API Management cluster... 
+  - adding containers, provider CRDs, and so on...
 
 ```
  Creating CustomResourceDefinition="providers.clusterctl.cluster.x-k8s.io"
