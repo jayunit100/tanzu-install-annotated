@@ -139,18 +139,16 @@ with the specific OVA `<VERSION>` information is hidden under VSphere APIs.  Thu
             run.tanzu.vmware.com/os-image: v1.24.9---vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
             run.tanzu.vmware.com/tkr: v1.24.9---vmware.1-tkg.1
           osImageRef:
-            moid: vm-51
-            template: /dc0/vm/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1
+            # The NEXT TWO fields are the ones that are added by the Mutating Webhook after querying VCenter !!!
+            moid: vm-51  <-- 1
+            template: /dc0/vm/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1 <-- 2 
             version: v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
 ```
-Looking just a few lines down in the same cluster object, we see that the `machineDeployment` definition, in fact, will reference the 
+Looking just a few lines down in the same cluster object, we see that the `machineDeployment` definition, in fact, will reference the
 - image-type: ova
 - os-name: ubuntu
-fields:
+fields, and then those `labels` will be mappable to a VM Image template that can be called inside the MachineDeployment definitions. 
 ```
-            moid: vm-51
-            template: /dc0/vm/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1
-            version: v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
     version: v1.24.9+vmware.1
     workers:
       machineDeployments:
@@ -329,8 +327,34 @@ The function that is triggered, ultimately, which joins data from vsphere into t
         // Write the data out to our OSImage structures 
         return "", cw.processAndSetResult(result, cluster, cpData, mdDatas)
 }
+```
+
+We later on then see that, `processAndSetResult` results in a call to `populateTKRDataFromResult`... This function is the one that
+adds the OSImageREf Template and MOID directly to the above struct.  Let's recall what that struct looks like
+after this Webhook runs:
 
 ```
+    osImageRef:
+      # The NEXT TWO fields are the ones that are added by the Mutating Webhook after querying VCenter !!!
+      moid: vm-51  <-- 1
+      template: /dc0/vm/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1 <-- 2 
+      version: v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
+```
+
+And finally, here's the part that sets those parameter inside of /vsphere-template-resolver/template/resolver.go.
+
+```
+func populateTKRDataFromResult(tkrDataValue *resolver_cluster.TKRDataValue, templateResult *templateresolver.TemplateResult) {
+        if templateResult == nil {
+                // If the values are empty, its possible that the resolution was skipped because the details were already present.
+                // Do not overwrite.
+                return
+        }
+        tkrDataValue.OSImageRef[osImageRefTemplate] = templateResult.TemplatePath
+        tkrDataValue.OSImageRef[osImageRefMOID] = templateResult.TemplateMOID
+}
+```
+
 
 # Conclusion
  
