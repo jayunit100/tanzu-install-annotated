@@ -81,6 +81,7 @@ This might take a while...
 The `InitRegion` function lives inside Tanzu CLI.  IT has ALL the logic for kind and mgmt cluster bootstrapping.  
 `tanzu management-cluster create...` will start by making kind cluster... then mgmt cluster in vsphere...  i.e. 
 
+```
 - Make Kind cluster
   - Install Certmanager
   - Install CAPI
@@ -92,6 +93,7 @@ The `InitRegion` function lives inside Tanzu CLI.  IT has ALL the logic for kind
   - Install TF
   - TF and Addons
 - Delete original Kind Cluster
+```
 
 Ok, lets look in detail at this: 
 
