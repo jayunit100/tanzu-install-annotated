@@ -79,19 +79,21 @@ This might take a while...
 # Bootstrapping TKG with Kind
 
 The `InitRegion` function lives inside Tanzu CLI.  IT has ALL the logic for kind and mgmt cluster bootstrapping.  
+`tanzu management-cluster create...` will start by making kind cluster... then mgmt cluster in vsphere...  i.e. 
 
-- You can't have a workload cluster w/o a persistent management cluster.
-- You can't have a persistent management cluster without a kind bootstrap cluster.
-- You can't have a kind bootstrap cluster that works w/ TKG without installing tkg-pkg and other pre-requisites
+- Make Kind cluster
+  - Install Certmanager
+  - Install CAPI
+  - Install CAPV
+  - Install TF and Addons
+- CAPV pods in Kind now makes a CAPV Cluster in Vsphere
+  - Install CAPI
+  - Install CAPV
+  - Install TF
+  - TF and Addons
+- Delete original Kind Cluster
 
-Keep in mind that MANY OF THE THINGS the kind cluster does has to happen AGAIN when we make the persistent mangaement cluster.  So, the purpose of the `kind` cluster is to
-
-- *define* the management cluster as a set of CRDs that run a particular K8s version, CNI, and so on.
-- *run* a few `capv-controller` objects that can make VMs in the vsphere cloud, where those contorllers read the CRDs, and act on them (i.e. by making VMs on vsphere that run k8s )
-- *move* those `capv-controller` and other `capi` objects into the vsphere cluster, once it is up
-- *self-destruct* once the persistant management cluster is up and running.
-
-This page ONLY defines the creation of the `kind` cluster.  IT doesn't ACTUALLY create any CAPI clusters, that is on the *next* markdown page, where we define the `Management Cluster` creation.
+Ok, lets look in detail at this: 
 
 ### To bootstrap TKG , we run 
 
