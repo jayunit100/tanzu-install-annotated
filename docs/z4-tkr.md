@@ -1,7 +1,8 @@
 # TKR
 
 The TKR has a close relationship with the management cluster version.  So, before we look at the TKR, lets
-look at our management cluster.
+look at our management cluster.  Note, we're going to start by looking at the TKR_DATA field, which you'll understand
+much better if you read about the [WEBHOOKS](https://tanzu-install-annotated.readthedocs.io/en/latest/z3-webhooks/) article on this same site...
 
 ## Management Cluster version
 
