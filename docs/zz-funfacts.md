@@ -1,5 +1,7 @@
 # FUN_FACTS
 
+
+
 ## 2.1 (Glasgow)
 
 
@@ -15,6 +17,7 @@
 	- Wait for CAPI to come up
 	- Create PackageInstalls on the cluster
 	- Wait for all packages to come up
+- GPU on ClusterClass not yet supported, stay tuned for 2.1.1....
 
 ### Features
 
