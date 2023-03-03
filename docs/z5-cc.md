@@ -51,7 +51,7 @@ spec:
             ...
 ```
 
-## TKG ClusterClasses
+# ClusterClasses
 
 
 A TKG Cluster class (for vsphere) looks a little more complex.  We can see a few differences...
@@ -100,6 +100,7 @@ spec:
 ```
 The JSON PAtches then begin, and theres... alof of them.  These go in and modify the `KubeadmControlPlaneTemplate` and other items.
 
+## JSON PATCHES
 
 ```
   - definitions:
@@ -140,13 +141,13 @@ The JSON PAtches then begin, and theres... alof of them.  These go in and modify
 ... (100s more json patches) ...
 ```
 
-## JSon patch details for a TKG Cluster
+# JSON PAtches for VSPHERE Clusters
 
 These patches can be divided up like so (this YAML was reformatted using a python script here https://gist.github.com/jayunit100/d63944b2acda1797e1cc63bd07344283) .
 
 There are 4 major patches we apply: 
 
-### KubeadmControlPlaneTemplate
+## KubeadmControlPlaneTemplate
 
 There are around 70 of these... 
 
@@ -158,7 +159,7 @@ There are around 70 of these...
       controlPlane: 'true'
 ```
 
-### KubeadmConfigTemplate
+## KubeadmConfigTemplate
 
 There are about 25  or so of these...
 
@@ -172,7 +173,7 @@ There are about 25  or so of these...
         - tkg-worker
 ```
 
-### VsphereMachineTemplate
+## VsphereMachineTemplate
 
 There are about 40 VSphereMachineTemplate...
 
@@ -187,7 +188,7 @@ There are about 40 VSphereMachineTemplate...
         - tkg-worker-windows
 ```
 
-### VSphereClusterTemplate
+## VSphereClusterTemplate
 
 There are 7 of these. 
 
@@ -200,7 +201,7 @@ There are 7 of these.
 ```
 
 
-### PATCH: KubeadmControlPlaneTemplate
+# KubeadmControlPlaneTemplate Patch Details
 
 Dont confuse these with the KubeadmConfig patches, which we show in the next section
 There are LOTS of these.... like about 70.... 
@@ -644,7 +645,7 @@ One of the largest patches is the creation of RBAC rules for the kubeadm configu
         permissions: '0600'
 ```
 
-#### PATCH: KubeadmConfigSpec
+# KubeadmConfigSpec PATCH Details
 
 ```
     - op: add
@@ -1003,7 +1004,7 @@ One of the largest patches is the creation of RBAC rules for the kubeadm configu
       controlPlane: 'true'
 ```
 
-### PATCH: KubeadmConfigTemplate 
+# KubeadmConfigTemplate Patch Details
 
 Now that the controlplane is patched, we need to patch the kubeadm configuration on the worker nodes...
 
@@ -1218,7 +1219,7 @@ KubeadmConfigTemplate:
           encoding: base64
           permissions: "0444"
 ```
-#### WINDOWS !!!
+## WINDOWS !!!
 
 Note that kubeaddmConfig (the worker nodes) has the information for windows specific changes.  These write out 
 files to the node when it starts up that are required for certain windows things (like installing antrea).
@@ -1373,7 +1374,7 @@ And thats it, heres the selector
         - tkg-worker
 ```
 
-### PATCH: VSPhereMachineTemplate
+# VSPhereMachineTemplate Patch Details
 
 Now we have the changes which we put into vsphere machine templates. These support things like GPU (not shown here) and PCI Passthrough.
 There are maybe 30 or so of these patches.
@@ -1559,7 +1560,7 @@ VSphereMachineTemplate:
 
 
 
-### PATCH: VSphereClusterTemplate
+# VSphereClusterTemplate Patch Details
 
 Next we have all the changes to the VSphere Cluster...   There are about 6 of these.
 ```
