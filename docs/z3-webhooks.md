@@ -30,6 +30,7 @@ In this article we'll specifically look at the **WEBHOOK** implementation detail
 
 ## What goes into a Topology ?
 
+To understand webhooks, we need to look at the fields that youre allowed to configure in the *topology* of your cluster.
 
 There are several key value pairs that are given to a ClusterClass cluster topology.  We can see that these are product specific: 
 
