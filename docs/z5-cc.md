@@ -14,13 +14,15 @@ metadata:
 ```
 
 When making CAPI clusters, you need to make several objects:
+
 - ControlPlaneVMs
 - Workers
-  - WorkerVM type 1 (usually a linux node)
-  - WorkerVM type 2 (maybe a windows node) 
-  - ... (maybe other types of nodes in your cluster)
+- WorkerVM type 1 (usually a linux node)
+- WorkerVM type 2 (maybe a windows node) 
+- ... (maybe other types of nodes in your cluster)
 
 Each of (controlpane/worker) needs:
+
 - A VM Template definition
 - CPU
 - Memory
