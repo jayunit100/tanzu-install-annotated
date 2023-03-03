@@ -3,13 +3,33 @@
 Looking at a TKG Cluster, we find a *topology* field....
 
 ```
-  topology:
+apiVersion: cluster.x-k8s.io/v1beta1
+ kind: Cluster
+ spec:
+   topology:  <----------------------------- this defines the type of cluster your making !!!
     class: tkg-vsphere-default-v1.0.0
     controlPlane:
       metadata:
         annotations:
           run.tanzu.vmware.com/resolve-os-image: image-type=ova,os-name=ubuntu
 ```
+
+This comes from the upstream `ClusterClass` topology API: https://kubernetes.io/blog/2021/10/08/capi-clusterclass-and-managed-topologies/... A topology
+is a generic CAPI term, and it points to a **class**
+
+## Topology Classes
+
+The topology of a cluster includes:
+- ControlPlane configuration
+- Worker configuration
+- Customizations to the Worker and ControlPlane VMs
+
+Theres a larger section with these details in [TKG Annotated](https://tanzu-install-annotated.readthedocs.io/en/latest/z5-cc/) here which goes through the gory details of how these things are configured.  
+
+In this article we'll specifically look at the **WEBHOOK** implementation details, which are triggered 
+
+## What goes into a Topology ?
+
 
 There are several key value pairs that are given to a ClusterClass cluster topology.  We can see that these are product specific: 
 
@@ -65,17 +85,18 @@ Before we dive into the details of webhooks, lets take a look at some of the web
                                             ┌─▼─────────────+-------------------->| webhook for tkr-vsphere-resolver|
                                             |               |                     | running in tkr-resolver pod     |
                                             │               │                     +---------------------------------+
-0. kind bootstraps...                       │               │ <-- anytime you make a cluster a webhook will
-                     ┌─────────────────────►│    APIServer  │     be called from your APIServer that points back
-Capi is installed    │                      │               │     to CAPI pods... you can see these w/ kubectl get validatingwebhook
-                     │                      │               │     and kubectl get mutatingwebhook.  TKG makes alot of these, and
-- CAPI pods          │                      └──┬────────────┘     alot of the defaults you get for free are b/c of mutating webhooks  
-- Mutating hooks     │                         │                  which "hydrate" your objects when you send them to the APIServer... 
+0. kind bootstraps...                       │               │ <---- anytime you make a cluster a webhook will
+                     ┌─────────────────────►│    APIServer  │       be called from your APIServer that points back
+Capi is installed    │                      │               │       to CAPI pods... you can see these w/ kubectl get validatingwebhook
+                     │                      │               │       and kubectl get mutatingwebhook.  TKG makes alot of these, and
+                     │                      └──┬────────────┘       alot of the defaults you get for free are b/c of mutating webhooks  
+- CAPI pods          │                         │                    which "hydrate" your objects when you send them to the APIServer... 
+- Mutating hooks.    |                         |
 - Validating hooks that point back to CAPIServices are put on the APISErver... 
             ┌────────┴───┐                     │
             │            │                     │
             │            │                     │
-            │   CAPI Pod │                     │   3. ClusterClass results in MD and KubeadmCtrlPlane creations... 
+            │   CAPI Pod │                     │   2. ClusterClass results in MD and KubeadmCtrlPlane creations... 
       ┌─────+            │                     │.     Those objects in turn get funneled through other webhooks...
       │     │            │                     │      Its webhooks all the way down...
       │     └───┬────────┘                     │
@@ -86,7 +107,7 @@ Capi is installed    │                      │               │     to CAPI 
       │      ├──────────────┴───────────────┐  │
       │      │ webhook for machine          │  │          ┌───────────────┐
       │      ├──────────────────────────────┘  │          │  Certmanager  │
-      │      │ webhook for machinedeployment◄──┘          │               │
+      │      │ webhook for machinedeployment|◄─┘          │               │
       │      └──────────────────────────────┘             │               │
       │                                                   └───┬───────────┘
       │         Don't forget certmanager ! Certmanager has    │
