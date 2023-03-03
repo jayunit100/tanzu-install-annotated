@@ -13,7 +13,7 @@ cluster classes basically define
 
 A Simple cluster class you can look at for pedagogical purposes is on the [official clusterclass docs](https://cluster-api.sigs.k8s.io/tasks/experimental-features/cluster-class/write-clusterclass.html). 
 
-```
+```yaml
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: ClusterClass
 metadata:
