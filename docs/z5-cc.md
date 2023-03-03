@@ -2,40 +2,27 @@
 
 TKG 2.1+ Uses clusterclasses by default and we reference them many times here.
 
-## At its core
+## What is a cluster class 
 
-The simplest possible cluster class you can concieve is below... 
+The simplest possible cluster class you can concieve is below... we will see that
+cluster classes basically define
+- A controlplane configuration
+- A worker node configuration
+- Changes to the sub-objects of each of these
+
+
+A Simple cluster class you can look at for pedagogical purposes is on the [official clusterclass docs](https://cluster-api.sigs.k8s.io/tasks/experimental-features/cluster-class/write-clusterclass.html). 
 
 ```
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: ClusterClass
 metadata:
   name: docker-clusterclass-v0.1.0
-```
-
-When making CAPI clusters, you need to make several objects:
-
-- ControlPlaneVMs
-- Workers
-- WorkerVM type 1 (usually a linux node)
-- WorkerVM type 2 (maybe a windows node) 
-- ... (maybe other types of nodes in your cluster)
-
-Each of (controlpane/worker) needs:
-
-- A VM Template definition
-- CPU
-- Memory
-
-These are defined in our cluster class here (see the [official clusterclass docs](https://cluster-api.sigs.k8s.io/tasks/experimental-features/cluster-class/write-clusterclass.html)
-for details... 
-
-```
 spec:
-  controlPlane:
+  controlPlane:  <-- configure me for tweaking etcd !!! 
     ref:
       ...
-    machineInfrastructure:
+    machineInfrastructure: <-- configure me with VSphere CPUs and memory.
       ref:
         ...
   infrastructure:
@@ -45,13 +32,15 @@ spec:
     machineDeployments:
     - class: default-worker
       template:
-        bootstrap:
-          ref:
+        bootstrap: <--- configure me for different bootstrap logic
+          ref: 
             ...
-    infrastructure:
+    infrastructure:  <----  configure me with VSphere CPUs and memory.... or WINDOWS nodes !!!
           ref:
             ...
 ```
+
+
 
 # ClusterClasses
 
