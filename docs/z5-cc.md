@@ -1032,6 +1032,9 @@ One of the largest patches is the creation of RBAC rules for the kubeadm configu
           {{- $admissionPlugins -}},EventRateLimit
           {{- end }}
 ```
+
+## Selector
+
 And of course, our selector which tells the patches to apply all of these to the `KubeadmControlTemplate`.
 ```
   selector:
@@ -1373,7 +1376,7 @@ files to the node when it starts up that are required for certain windows things
           start-service antrea-agent
         path: C:\Temp\antrea.ps1
 ```
-##  Kubeadm NTP and TLS etc...
+## Certificates and NTP
 
 ```
     "/s/t/s/useExperimentalRetryJoin":
@@ -1693,9 +1696,19 @@ Necessary so we can map it back to the name of the CAPI cluster... there are int
       path: "/s/t/s/controlPlaneEndpoint/port"
       valueFrom:
         variable: apiServerPort
+```
+## Selector
+```
   selector:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: VSphereClusterTemplate
     matchResources:
       infrastructureCluster: 'true'
 ```
+
+# Thats it !
+
+The above JSON patches are from 2.1.0.. but there are more patches in 2.1.1, including patches to support PCI Passthrough and other new fixes
+which make 2.1.1 more usable then 2.1.0 for the full TKG feature matrix.
+
+
