@@ -203,8 +203,18 @@ There are 7 of these.
 
 # KubeadmControlPlaneTemplate Patch Details
 
-Dont confuse these with the KubeadmConfig patches, which we show in the next section
+There are kubeadmConfigSpec changes for two different types of objectS:
+- the controlplane nodes
+- the worker nodes
+
 There are LOTS of these.... like about 70.... 
+
+These patches all effect the `kubeadmConfigSpec` specifically on the **control plane** nodes.... 
+Thus, they have special controlplane related items in them, like:
+- RBAC specific additions we enable for APIServers
+- NTP related patches that are required for consensus
+- Things related to etcd , which only needs to be running on the control plane
+- Admission controllers that configure the APISErvers behaviour
 
 ```
 KubeadmControlPlaneTemplate:
@@ -497,7 +507,7 @@ KubeadmControlPlaneTemplate:
           permissions: "0444"
 ```
 
-#### Control Plane RBAC !!!
+## Control Plane RBAC !!!
 
 One of the largest patches is the creation of RBAC rules for the kubeadm configuration: 
 
@@ -644,9 +654,7 @@ One of the largest patches is the creation of RBAC rules for the kubeadm configu
         path: "/etc/kubernetes/audit-policy.yaml"
         permissions: '0600'
 ```
-
-# KubeadmConfigSpec PATCH Details
-
+And more control plane modifications: 
 ```
     - op: add
       path: "/s/t/s/kubeadmConfigSpec/files/-"
@@ -1006,8 +1014,11 @@ One of the largest patches is the creation of RBAC rules for the kubeadm configu
 
 # KubeadmConfigTemplate Patch Details
 
-Now that the controlplane is patched, we need to patch the kubeadm configuration on the worker nodes...
+This is how we customize the kubelets that run for WORKER nodes.
 
+- HTTP proxy info
+- Custom CAs
+- Windows Workload cluster modifications
 ``` 
 KubeadmConfigTemplate:
   jsonPatches:
@@ -1379,6 +1390,13 @@ And thats it, heres the selector
 Now we have the changes which we put into vsphere machine templates. These support things like GPU (not shown here) and PCI Passthrough.
 There are maybe 30 or so of these patches.
 
+- Vsphere user
+- Vsphere cloneMode
+- Vsphere memory
+- Vsphere CPU
+- PCI/VMX passthrough information
+- other VSphere specific parameters
+
 ```
 VSphereMachineTemplate:
   jsonPatches:
@@ -1563,6 +1581,12 @@ VSphereMachineTemplate:
 # VSphereClusterTemplate Patch Details
 
 Next we have all the changes to the VSphere Cluster...   There are about 6 of these.
+
+- ControlPlaneEndpoints
+- Thumbprints
+- Cluster Name
+- apiServerPort
+
 ```
 VSphereClusterTemplate:
   jsonPatches:
