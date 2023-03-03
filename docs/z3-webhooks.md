@@ -1,5 +1,33 @@
 # Webhooks
 
+What happens when you make a cluster? 
+
+- You install a tanzu management cluster via `tanzu mc create ...`
+- The tanzu cli, during installation, creates a K8s APIServer that runs on a Management Cluster.
+- Then the tanzu cli adds CAPI controllers to the APIServer, along with webhook definitions which point to those controllers.
+- NOW, any CAPI `Cluster` object that you make is "pre-processed" by the webhook!
+  - one of these *webhooks* is the `tkr-vsphere-resolver`...
+
+Next, you might make a workload cluster: 
+
+- You run `tanzu cluster create... --tkr ..."`, making a new workload cluster. 
+- A `Cluster` object is created for you by tanzu and sent to the APIServer as YAML.
+- The APIServer sees that theres a Cluster object, and so immediately calls out to the `tkr-vsphere-resolver` Mutating Cluster Webhook to finish creating it.
+- Webhook goes off and talkes to Vsphere, to query the `<VERSION>` values for all OS Templates
+- It then writes this data into the **TKR_DATA** field.
+- APIServer recieves back the "mutated" `Cluster` struct from the webhook, now having
+  - fine grained OVA path info
+  - TKR_DATA fully defined
+- Now, CAPI reads your `toplogy`, and it:
+  - makes MachineDeployment objects 
+  - makes KubeadmControlPlane objects
+
+Ok.  So, thats how webhooks play into your overall cluster creation: 
+- They act AFTER you call `tanzu cluster create...` 
+- but BEFORE CAPI actually goes off and starts making the vsphere and CAPI objects that define your underlying infrastructure
+
+## What is a Cluster ? 
+
 Looking at a TKG Cluster, we find a *topology* field....
 
 ```
@@ -70,7 +98,8 @@ Let's learn how the last field , `TKR_DATA` is populated with specific VSphere O
 
 ## A Quick Sketch
 
-Before we dive into the details of webhooks, lets take a look at some of the webhooks in CAPI and 
+
+Ok, so lets look at how the above fields 
 
 ```
                          ┌──────────----------+
@@ -186,7 +215,7 @@ When new CAPI MachineDeployments are created.
 
 # Webhook
 
-If you look in the TKG payload you'll see alot of webhooks.
+Finally, the webhooks... 
 
 These are installed as YAML files, and part of the management cluster setup payload.
 To find these, look inside:
@@ -246,21 +275,6 @@ tkg/vsphere-template-resolver/main.go:
    hookServer.Register("/resolve-template", 
       &webhook.Admission{
 ```
-
-## How does this relate to a Cluster object?
-
-
-- You install a tanzu management cluster
-- The tanzu cli, during installation, creates a K8s APIServer.
-- Then the tanzu cli adds CAPI controllers to the APIServer, along with webhook definitions which point to those controllers, so that any `Cluster` objects being created can be processed by CAPI before they are stored in the Kubernetes APIServer.
-  - one of these webhooks is the `tkr-vsphere-resolver` webhook definition.
-- You run `tanzu cluster create... --tkr ..."`, making a new workload cluster. 
-- A `Cluster` object is created for you by tanzu and sent to the APIServer as YAML.
-- The APIServer sees that theres a Cluster object, and so immediately calls out to the `tkr-vsphere-resolver` Mutating Cluster Webhook to finish creating it.
-- Webhook goes off and talkes to Vsphere, to query the `<VERSION>` values for all OS Templates
-- It then writes this data into the TKR_DATA field 
-- Api server recieves the "mutated" `Cluster` struct, now having fine grained OVA path info, and stores the `Cluster` object to `etcd`
-- Now, the MachindDeployment and KubeadmControlPlane objects (which will get created by CAPI), will have well defined images, and your nodes will come up.
 
 ### What about other types of hooks ? 
 
