@@ -68,7 +68,7 @@ Now, picking 1.24.9... we can look at its contents `kubectl edit tkr v1.24.9---v
 
 The metadata section has multiple labels...
 
-```
+```yaml
 apiVersion: run.tanzu.vmware.com/v1alpha3
 kind: TanzuKubernetesRelease
 metadata:
@@ -83,6 +83,19 @@ metadata:
     v1.24.9---vmware.1-tkg: ""
     v1.24.9---vmware.1-tkg.1: ""
   name: v1.24.9---vmware.1-tkg.1
+spec:
+  ...
+```yaml
+or in a BYO TKR, maybe youll have something like 
+```
+kind: TanzuKubernetesRelease
+apiVersion: run.tanzu.vmware.com/v1alpha3
+metadata:
+  name: v1.24.9---vmware.1-gpu-efi
+  labels:
+    tkr.tanzu.vmware.com/gpu-efi: ""
+spec:
+  ...
 ```
 
 You'll notice these labels are redundant.  That gives you the ability to quickly find
