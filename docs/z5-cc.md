@@ -17,7 +17,8 @@ A Simple cluster class you can look at for pedagogical purposes is on the [offic
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: ClusterClass
 metadata:
-  name: docker-clusterclass-v0.1.0
+  name: docker-clusterclass-v0.1.0 <-- this could be vsphere, aws, .... but CAPD is the smallest, simplest clusterclass to start with...
+### Our ClusterClass has 4 major parts ... lets look at them... 
 spec:
   controlPlane:  <-- configure me for tweaking etcd !!! 
     ref:
