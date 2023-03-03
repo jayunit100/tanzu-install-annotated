@@ -26,7 +26,7 @@ The topology of a cluster includes:
 
 Theres a larger section with these details in [TKG Annotated](https://tanzu-install-annotated.readthedocs.io/en/latest/z5-cc/) here which goes through the gory details of how these things are configured.  
 
-In this article we'll specifically look at the **WEBHOOK** implementation details, which are triggered 
+In this article we'll specifically look at the **WEBHOOK** implementation details, which are triggered whenever you run `tanzu cluster create -f...` which add all the details to your desired cluster (for example, the TKR information, the Operating system image information, the CNI configuration details, and other things you probably dont want to think about).
 
 ## What goes into a Topology ?
 
