@@ -212,7 +212,6 @@ There are LOTS of these.... like about 70....
 These patches all effect the `kubeadmConfigSpec` specifically on the **control plane** nodes.... 
 Thus, they have special controlplane related items in them, like:
 - RBAC specific additions we enable for APIServers
-- NTP related patches that are required for consensus
 - Things related to etcd , which only needs to be running on the control plane
 - Admission controllers that configure the APISErvers behaviour
 
@@ -223,6 +222,11 @@ KubeadmControlPlaneTemplate:
     - op: add
       path: "/s/t/s/kubeadmConfigSpec/clusterConfiguration/apiServer/extraVolumes"
       value: []
+```
+
+## etcd related patches
+
+```
     "/s/t/s/kubeadmConfigSpec/clusterConfiguration/etcd/local/extraArgs":
     - op: add
       path: "/s/t/s/kubeadmConfigSpec/clusterConfiguration/etcd/local/extraArgs"
@@ -239,8 +243,12 @@ KubeadmControlPlaneTemplate:
           cipher-suites: "{{ .tlsCipherSuites }}"
           {{- end }}
     "/s/t/s/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs":
-    - op: add
-      path: "/s/t/s/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs"
+```
+## apiserver patches
+
+```
+   - op: add
+     path: "/s/t/s/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs"
       valueFrom:
         template: |
           {{ $containCipherSuites := false }}
@@ -378,6 +386,9 @@ KubeadmControlPlaneTemplate:
       valueFrom:
         template: "{{(index .TKR_DATA .builtin.controlPlane.version).kubernetesSpec.coredns.imageTag}}"
     "/s/t/s/kubeadmConfigSpec/files/-":
+```
+## VIP configuration
+```
     - op: add
       path: "/s/t/s/kubeadmConfigSpec/files/-"
       valueFrom:
@@ -654,7 +665,7 @@ One of the largest patches is the creation of RBAC rules for the kubeadm configu
         path: "/etc/kubernetes/audit-policy.yaml"
         permissions: '0600'
 ```
-And more control plane modifications: 
+## Admission control
 ```
     - op: add
       path: "/s/t/s/kubeadmConfigSpec/files/-"
@@ -710,6 +721,9 @@ And more control plane modifications:
           path: /etc/kubernetes/eventConfig.yaml
           encoding: base64
           content: {{ .eventRateLimitConf}}
+```
+## containerd and proxying
+```
     "/s/t/s/kubeadmConfigSpec/preKubeadmCommands/-":
     - op: add
       path: "/s/t/s/kubeadmConfigSpec/preKubeadmCommands/-"
@@ -803,6 +817,11 @@ And more control plane modifications:
           {{- end }}
           bindPort: {{ .apiServerPort }}
     "/s/t/s/kubeadmConfigSpec/joinConfiguration/controlPlane":
+```
+
+## kubeadmJoining parameters
+
+```
     - op: add
       path: "/s/t/s/kubeadmConfigSpec/joinConfiguration/controlPlane"
       valueFrom:
@@ -870,6 +889,10 @@ And more control plane modifications:
             {{ end }}
           {{ end }}
     "/s/t/s/kubeadmConfigSpec/joinConfiguration/nodeRegistration/kubeletExtraArgs/node-labels":
+```
+## Node labelling and audit logging
+
+```
     - op: add
       path: "/s/t/s/kubeadmConfigSpec/joinConfiguration/nodeRegistration/kubeletExtraArgs/node-labels"
       valueFrom:
@@ -959,6 +982,9 @@ And more control plane modifications:
       path: "/s/t/s/kubeadmConfigSpec/joinConfiguration/nodeRegistration/taints"
       value: []
     "/s/t/s/rolloutBefore":
+```
+## Certificates and NTP
+```
     - op: add
       path: "/s/t/s/rolloutBefore"
       valueFrom:
@@ -1005,6 +1031,9 @@ And more control plane modifications:
           {{- else -}}
           {{- $admissionPlugins -}},EventRateLimit
           {{- end }}
+```
+And of course, our selector which tells the patches to apply all of these to the `KubeadmControlTemplate`.
+```
   selector:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlaneTemplate
@@ -1019,6 +1048,9 @@ This is how we customize the kubelets that run for WORKER nodes.
 - HTTP proxy info
 - Custom CAs
 - Windows Workload cluster modifications
+- ...
+
+
 ``` 
 KubeadmConfigTemplate:
   jsonPatches:
@@ -1066,6 +1098,10 @@ KubeadmConfigTemplate:
             - ' {{- . -}} '
             {{- end }}
             sudo: ALL=(ALL) NOPASSWD:ALL
+```
+## HTTP Proxy and CAs 
+
+```
     "/s/t/s/preKubeadmCommands/-":
     - op: add
       path: "/s/t/s/preKubeadmCommands/-"
@@ -1137,6 +1173,11 @@ KubeadmConfigTemplate:
             echo '  {{ . -}} ' >> /etc/containerd/config.toml
           {{- end }}
           {{- template "echo" $val -}}
+```
+
+## Containerd and Node stuff
+
+```
     - op: add
       path: "/s/t/s/preKubeadmCommands/-"
       value: systemctl restart containerd
@@ -1230,6 +1271,7 @@ KubeadmConfigTemplate:
           encoding: base64
           permissions: "0444"
 ```
+
 ## WINDOWS !!!
 
 Note that kubeaddmConfig (the worker nodes) has the information for windows specific changes.  These write out 
@@ -1330,6 +1372,10 @@ files to the node when it starts up that are required for certain windows things
           start-service kube-proxy
           start-service antrea-agent
         path: C:\Temp\antrea.ps1
+```
+##  Kubeadm NTP and TLS etc...
+
+```
     "/s/t/s/useExperimentalRetryJoin":
     - op: remove
       path: "/s/t/s/useExperimentalRetryJoin"
@@ -1400,6 +1446,10 @@ There are maybe 30 or so of these patches.
 ```
 VSphereMachineTemplate:
   jsonPatches:
+```
+
+## Standard VSPHERE parameters
+```
     "/s/t/s/numCPUs":
     - op: replace
       path: "/s/t/s/numCPUs"
@@ -1473,6 +1523,9 @@ VSphereMachineTemplate:
               name: {{ .name }}
               {{- end }}
             {{- end }}
+```
+## DualStack network configuration
+```
     - op: add
       path: "/s/t/s/network"
       valueFrom:
@@ -1566,6 +1619,11 @@ VSphereMachineTemplate:
       valueFrom:
         template: "{{ (index .TKR_DATA .builtin.machineDeployment.version).osImageRef.template
           }}"
+```
+## Selector
+
+And finally of course the selector
+```
   selector:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: VSphereMachineTemplate
@@ -1590,6 +1648,11 @@ Next we have all the changes to the VSphere Cluster...   There are about 6 of th
 ```
 VSphereClusterTemplate:
   jsonPatches:
+```
+## ControlPlane Endpoint
+
+```
+
     "/s/t/s/controlPlaneEndpoint":
     - op: add
       path: "/s/t/s/controlPlaneEndpoint"
@@ -1607,6 +1670,12 @@ VSphereClusterTemplate:
       path: "/s/t/s/server"
       valueFrom:
         variable: vcenter.server
+```
+## Identity of the VSphere Cluster 
+
+Necessary so we can map it back to the name of the CAPI cluster... there are internal functionality that depend on this ... 
+
+```
     "/s/t/s/identityRef":
     - op: add
       path: "/s/t/s/identityRef"
