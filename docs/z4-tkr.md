@@ -53,7 +53,7 @@ Now,
 
 Your current version of TKG will have 3 default TKRs you can see... 
 
-```
+```yaml
 kubo@Yk9ph4RbYmJO7:~$ kubectl get TanzuKubernetesRelease
 NAME                        VERSION                   READY   COMPATIBLE   CREATED
 v1.22.17---vmware.1-tkg.1   v1.22.17+vmware.1-tkg.1   True    True         8d
@@ -85,9 +85,10 @@ metadata:
   name: v1.24.9---vmware.1-tkg.1
 spec:
   ...
-```yaml
-or in a BYO TKR, maybe youll have something like 
 ```
+or in a BYO TKR, maybe youll have something like 
+
+```yaml
 kind: TanzuKubernetesRelease
 apiVersion: run.tanzu.vmware.com/v1alpha3
 metadata:
