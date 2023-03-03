@@ -75,7 +75,7 @@ metadata:
   creationTimestamp: "2023-02-22T20:16:43Z"
   generation: 1
   labels:
-    v1: ""  <-- why do we need to match on v1 ?  
+    v1: ""
     v1.24: ""
     v1.24.9: ""
     v1.24.9---vmware: ""
@@ -85,6 +85,13 @@ metadata:
   name: v1.24.9---vmware.1-tkg.1
 ```
 
+You'll notice these labels are redundant.  That gives you the ability to quickly find
+TKRs related to a particular version, for example:
+```
+k get tkr -l 'v1.24'
+```
+
+Will give you all TKRs that have any relation to the Kubernetes 1.24 Release minor.
 
 ### TKR Packages
 
