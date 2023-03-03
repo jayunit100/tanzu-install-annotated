@@ -1670,6 +1670,17 @@ VSphereClusterTemplate:
 
 Necessary so we can map it back to the name of the CAPI cluster... there are internal functionality that depend on this ... 
 
+
+(NOTE: Im not 100% sure about the below statement, need to get more details but... it appears that this identity name is required for 
+annotating things on your cluster that need to be observed by things like cloud providers ?) 
+
+If you look at VsphereCluster types, you'll see this name is needed for Cluster API PRovider VSphere.  AND the CSI and CPI providers 
+also use this name as a way to identify cloud resources.  Thus, the "name" of our cluster itself needs to be unambiguously sent
+in to the VSphere objects that we create , so that CAPV, Vsphere CSI, and Vsphere CPIs,  can annotate its resources appropriately for the cloud provider.
+
+https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/cf6049720c813[…]f6c34038a204fdbfa927be7855/apis/v1beta1/vspherecluster_types.go
+
+
 ```
     "/s/t/s/identityRef":
     - op: add
