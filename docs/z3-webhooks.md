@@ -1,5 +1,30 @@
 # Webhooks
 
+For the overall data model of how a Cluster points to a ClusterClass... use this as a quick reference... 
+
+```
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: ClusterClass
+spec:
+  controlPlaneRef:
+    kind: KubeadmControlPlane 
+  infrastructureRef:
+    kind: VSphereCluster <--  VSphereClusterTemplate
+...
+  topology:
+    class: tkg-vsphere-default-v1.0.0 ---> points to a clusterClass... 
+
+           +-------- controlPlane:-----  machineInfrastructure     
+           |                                 VsphereMachineTemplate
+           |                                                     
+           |                                                     
+ Cluster ----------  infrastructure:-----  VSphereClusterTemplate    
+   Class   |                                                     
+           |                                                     
+           |                                                     
+           +-------- patches  <-- lots of these                                
+```
+
 What happens when you make a cluster? 
 
 - You install a tanzu management cluster via `tanzu mc create ...`
