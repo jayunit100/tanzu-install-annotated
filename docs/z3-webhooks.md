@@ -29,9 +29,7 @@ metadata:
 ...
 ```
 
-... It applies to objects of type `cluster.x-k8s.io` and, when you CREATE such an object in kubernetes, that Webhook then "does stuff". 
-
-We wont examine this webhook now, but instead, we'll look at another webhook, for **Antrea** which is less abstract and easier to grok if your new to TKG.
+... It applies to objects of type `cluster.x-k8s.io` and, when you CREATE such an object in kubernetes, that Webhook then "does stuff".  There are many such webhooks at work in TKG.  We wont examine this webhook now, but instead, we'll look at another webhook, for **Antrea** which is less abstract and easier to grok if your new to TKG.
 
 ## What is a webhook ? 
 
