@@ -1,28 +1,48 @@
 # Webhooks
 
-For the overall data model of how a Cluster points to a ClusterClass... use this as a quick reference... 
+The CAPI Cluster object is the "placeholder" for all the objects associated w/ a Kubernetes cluster.  But its 
+real underlying implementation is created dynamically by a cluster class.
+
+Much of the logic for the cluster's underlying functionality (like, the details of its CNI or TKR or CSI), are provided by webhooks. 
+
+To trace the relationship of the webhooks to the bigger picture, we need to first understand what a Cluster is, and what a
+ClusterClass is: because these define, from a user perspective, the cluster's capabilities.  The Webhook's job is
+to provide the underlying details about those capabilities.  For example:
+
+## Examples of Webhooks
+
+- A user sais they want k8s 1.24.  A webhook goes off and figures out exactly what OSImage needs to be used.
+- A user sais they want calico.  A webhook adds the calico package details to their cluster to make sure its installed at the right version.
+- ... TODO add more details of these ...
+
+Ok, now, lets see what drives webhook behaviour: The cluster and clusterclass setup.
+
+## Cluster vs ClusterClass
+
+Now, let's get back to understanding clusters and cluster classes.
+We can see the difference between a **CLUSTER** and its **CLUSTER CLASS** below:
+
+| Cluster           | Cluster Class  |
+| ------------------| -------------- |
+| infraRef          | infrastructure |
+| controlPlane Ref  | controlPlane   | 
+| variable...       | patches...     |
+
+
+<img width="1611" alt="image" src="https://user-images.githubusercontent.com/826111/222972562-67c42ed3-6401-47d8-bf3a-2e8f83c3dd49.png">
+
+Looking at them concretely
+- we can see the Cluster claims that it wants to be of "topology" of the ClusterClass on the right.
+- we can also see that the Cluster got *UPDATED* after its creation, to have links to its `KubeadmControlPlane` and `VSphereCluster` objects.
+
+
+We can verify that any CAPI cluster's implementation details exist on our cluster. 
 
 ```
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: ClusterClass
-spec:
-  controlPlaneRef:
-    kind: KubeadmControlPlane 
-  infrastructureRef:
-    kind: VSphereCluster <--  VSphereClusterTemplate
-...
-  topology:
-    class: tkg-vsphere-default-v1.0.0 ---> points to a clusterClass... 
-
-           +-------- controlPlane:-----  machineInfrastructure     
-           |                                 VsphereMachineTemplate
-           |                                                     
-           |                                                     
- Cluster ----------  infrastructure:-----  VSphereClusterTemplate    
-   Class   |                                                     
-           |                                                     
-           |                                                     
-           +-------- patches  <-- lots of these                                
+kubo@jjxn5jOMLHHOn:~$ kubectl get VsphereCluster | grep antrea
+tkg-vc-antrea-gl7lt   true    10.180.130.162   5d18h
+kubo@jjxn5jOMLHHOn:~$ kubectl get KubeadmControlPlane | grep antrea
+tkg-vc-antrea-m5hc5   tkg-vc-antrea   true          true                   1          1       1         0             5d18h   v1.24.9+vmware.1
 ```
 
 What happens when you make a cluster? 
