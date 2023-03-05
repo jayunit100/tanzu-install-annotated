@@ -12,6 +12,26 @@ you may not know how to create.   I'ts underlying implementation logic is thus s
 finish off your request, adding all the right data to it, so that your cluster is fully defined and TKG controllers
 know what to install, where to install it, how many nodes to create, and so on.  
 
+As a VERY QUICK first example, for ClusterAPI, theres a webhook when you make a new cluster.... 
+
+```
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  rules:
+  - apiGroups:
+    - cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+...
+```
+
+... It applies to objects of type `cluster.x-k8s.io` and, when you CREATE such an object in kubernetes, that Webhook then "does stuff". 
+
+We wont examine this webhook now, but instead, we'll look at another webhook, for **Antrea** which is less abstract and easier to grok if your new to TKG.
 
 ## What is a webhook ? 
 
@@ -111,7 +131,6 @@ We can see the difference between a **CLUSTER** and its **CLUSTER CLASS** below:
 | infraRef          | infrastructure |
 | controlPlane Ref  | controlPlane   | 
 | variable...       | patches...     |
-
 
 <img width="1611" alt="image" src="https://user-images.githubusercontent.com/826111/222972562-67c42ed3-6401-47d8-bf3a-2e8f83c3dd49.png">
 
@@ -360,7 +379,6 @@ To find these, look inside:
 Also, you'll see other controllers with webhooks like antrea. 
 
 ```
-
 ./.config/tanzu/tkg/providers/
   # When making antrea packages, 
   yttcc/vendir/cni/_ytt_lib/addons/packages/antrea/1.2.3/bundle/config/upstream/antrea.yaml:kind: MutatingWebhookConfiguration
@@ -384,8 +402,6 @@ Also, you'll see other controllers with webhooks like antrea.
     
   infrastructure-ipam-in-cluster/v0.1.0/ipam-components.yaml:kind: MutatingWebhookConfiguration
   infrastructure-azure/v1.6.1/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
-  
-  
 ```
 
 ## How do Webhooks get installed ? 
