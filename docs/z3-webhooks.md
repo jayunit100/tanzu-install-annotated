@@ -1,7 +1,91 @@
 # Webhooks
 
-The CAPI Cluster object is the "placeholder" for all the objects associated w/ a Kubernetes cluster.  But its 
-real underlying implementation is created dynamically by a cluster class.
+A simplified webhook fairy tale:
+
+- You `kubectl create -f blah.yaml` something, but its *incomplete*, for example, its missing all it's TKR metadata.
+- The API Server sends your webhook to a helper service, which reads blah.yaml, and updates it.
+- The API Server then recieves the webhooks transformed object, which now has some data in it that you forgot.
+- The API Server happily stores your *now complete* object. 
+
+In CAPI:  The CAPI Cluster object is a "placeholder" for all the objects associated w/ a Kubernetes cluster, many of which
+you may not know how to create.   I'ts underlying implementation logic is thus spread between many webhooks which
+finish off your request, adding all the right data to it, so that your cluster is fully defined and TKG controllers
+know what to install, where to install it, how many nodes to create, and so on.  
+
+
+## What is a webhook ? 
+
+Let's forget TKG for a second.  And look at a webhook for antrea.  CAPI isnt the only kid on the block with a pocket full of webhooks.
+
+If you look in the codebase for Antrea, we can see that when you make a new object, theres alot of logic that needs to be done to default
+things.  For example, a new AntreaPolicy needs to have a "tier" which helps antrea to decide what the priority of that network policy
+is relative to other policies... 
+```
+// https://github.com/antrea-io/antrea/blob/main/pkg/controller/networkpolicy/mutate.go#L111
+func (m *NetworkPolicyMutator) mutateAntreaPolicy(op admv1.Operation, ingress, egress []crdv1alpha1.Rule, tier string) (string, bool, []byte) {
+    ...
+    // Mutate empty tier name to the name of the Default application Tier.
+		if tier == "" {
+			allPaths = append(allPaths, fmt.Sprintf("/spec/tier"))
+			allValues = append(allValues, defaultTierName)
+```
+
+So, how do we make sure that the APISErver calls this `mutateAntreaPolicy` function when a user makes a new Antrea CRD?  Via a webhook YAML blob: 
+```
+---
+# Source: antrea/templates/webhooks/mutating/crdmutator.yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: "crdmutator.antrea.io"
+  labels:
+    app: antrea
+webhooks:
+  - name: "acnpmutator.antrea.io" <-- "When you cee an acnpmutator related HTTP request... "
+    clientConfig:
+      service:
+        name: "antrea" <--- "Send the request to the antrea service in the kube-system namespace..."
+        namespace: kube-system
+        path: "/mutate/acnp"   <-- "At the path http://kuberentes.kube-system.service.local:443/mutate/acnp..."
+    rules:
+      - operations: ["CREATE", "UPDATE"] <-- "... If it is a create request"
+        apiGroups: ["crd.antrea.io"] <-- "... and its making an antrea CRD"
+        apiVersions: ["v1alpha1"] <-- "... of version v1a1" 
+        resources: ["clusternetworkpolicies"] <-- "and its a CLUSTER NETWORK POLICY "
+        scope: "Cluster"
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: None
+    timeoutSeconds: 5
+  - name: "anpmutator.antrea.io"
+    clientConfig:
+      service:
+        name: "antrea"
+        namespace: kube-system
+        path: "/mutate/anp" <--- DO THE SAME THING for ANTREA NETWORK POLICIES 
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["crd.antrea.io"]
+        apiVersions: ["v1alpha1"]
+        resources: ["networkpolicies"]
+        scope: "Namespaced"
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: None
+    timeoutSeconds: 5
+```
+
+Even though this webhook works on the internal kubernetes service (i.e. bc antrea is a pod running in K8s), you can have a Webhook live on an
+external URL: 
+
+```
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+webhooks:
+- name: my-webhook.example.com
+  clientConfig:
+    url: "https://my-webhook.example.com:9443/my-webhook-path"
+```
+
+## Why do webhooks matter so much in TKG ? 
 
 Much of the logic for the cluster's underlying functionality (like, the details of its CNI or TKR or CSI), are provided by webhooks. 
 
@@ -9,7 +93,7 @@ To trace the relationship of the webhooks to the bigger picture, we need to firs
 ClusterClass is: because these define, from a user perspective, the cluster's capabilities.  The Webhook's job is
 to provide the underlying details about those capabilities.  For example:
 
-## Examples of Webhooks
+## TKG related Webhooks
 
 - A user sais they want k8s 1.24.  A webhook goes off and figures out exactly what OSImage needs to be used.
 - A user sais they want calico.  A webhook adds the calico package details to their cluster to make sure its installed at the right version.
@@ -276,27 +360,32 @@ To find these, look inside:
 Also, you'll see other controllers with webhooks like antrea. 
 
 ```
-./.config/tanzu/tkg/providers/infrastructure-oci/v0.4.0/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/cluster-api/v1.2.8/core-components.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/infrastructure-aws/v2.0.2/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/infrastructure-docker/v1.2.8/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/cert-manager/v1.7.2/cert-manager.yaml:  - mutatingwebhookconfigurations
-./.config/tanzu/tkg/providers/cert-manager/v1.7.2/cert-manager.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/cert-manager/v1.9.1/cert-manager.yaml:    resources: ["validatingwebhookconfigurations", "mutatingwebhookconfigurations"]
-./.config/tanzu/tkg/providers/cert-manager/v1.9.1/cert-manager.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/bootstrap-kubeadm/v1.2.8/bootstrap-components.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/infrastructure-vsphere/v1.5.1/infrastructure-components-supervisor.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/infrastructure-vsphere/v1.5.1/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/ytt/vendir/cni/_ytt_lib/addons/packages/antrea/1.7.2/bundle/config/upstream/antrea.yaml:      - mutatingwebhookconfigurations
-./.config/tanzu/tkg/providers/ytt/vendir/cni/_ytt_lib/addons/packages/antrea/1.7.2/bundle/config/upstream/antrea.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/ytt/vendir/kapp-controller/_ytt_lib/addons/packages/kapp-controller/0.41.5/bundle/config/upstream/kapp-controller.yaml:  - mutatingwebhookconfigurations
-./.config/tanzu/tkg/providers/infrastructure-ipam-in-cluster/v0.1.0/ipam-components.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/infrastructure-azure/v1.6.1/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/yttcc/vendir/cni/_ytt_lib/addons/packages/antrea/1.2.3/bundle/config/upstream/antrea.yaml:  - mutatingwebhookconfigurations
-./.config/tanzu/tkg/providers/yttcc/vendir/cni/_ytt_lib/addons/packages/antrea/1.2.3/bundle/config/upstream/antrea.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/yttcc/vendir/cni/_ytt_lib/addons/packages/antrea/1.2.3/bundle/config/upstream/antrea.yaml:kind: MutatingWebhookConfiguration
-./.config/tanzu/tkg/providers/yttcc/vendir/kapp-controller/_ytt_lib/addons/packages/kapp-controller/0.30.1/bundle/config/upstream/kapp-controller.yaml:  - mutatingwebhookconfigurations
-./.config/tanzu/tkg/providers/control-plane-kubeadm/v1.2.8/control-plane-components.yaml:kind: MutatingWebhookConfiguration
+
+./.config/tanzu/tkg/providers/
+  # When making antrea packages, 
+  yttcc/vendir/cni/_ytt_lib/addons/packages/antrea/1.2.3/bundle/config/upstream/antrea.yaml:kind: MutatingWebhookConfiguration
+  
+  control-plane-kubeadm/v1.2.8/control-plane-components.yaml:kind: MutatingWebhookConfiguration
+
+  cluster-api/v1.2.8/core-components.yaml:kind: MutatingWebhookConfiguration
+  cert-manager/v1.7.2/cert-manager.yaml:kind: MutatingWebhookConfiguration
+  
+  infrastructure-oci/v0.4.0/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
+  infrastructure-aws/v2.0.2/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
+  infrastructure-docker/v1.2.8/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
+  
+  
+  bootstrap-kubeadm/v1.2.8/bootstrap-components.yaml:kind: MutatingWebhookConfiguration
+  
+  infrastructure-vsphere/
+    # Note there are also webhooks for supervisor vsphere, but we dont cover those here, because this
+    # website focuses on TKG w/o supervisor.
+    v1.5.1/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
+    
+  infrastructure-ipam-in-cluster/v0.1.0/ipam-components.yaml:kind: MutatingWebhookConfiguration
+  infrastructure-azure/v1.6.1/infrastructure-components.yaml:kind: MutatingWebhookConfiguration
+  
+  
 ```
 
 ## How do Webhooks get installed ? 
