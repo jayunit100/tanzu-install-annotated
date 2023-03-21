@@ -2,14 +2,62 @@
 
 TKG 2.1+ Uses clusterclasses by default and we reference them many times here.
 
+## What is a cluster ? 
+
+- A **controlplane** reference
+- An **infrastructure** reference
+- and a **topology** which is:
+  - a class name (i.e. ` class: tkg-vsphere-default-v1.0.0`)
+  - a set of variables, which define parameterization of this class ( i.e. `auditLogging.Enabled=true`)
+
+
+##  Cluster params -> ClusterClass -> Kubeadm
+
+Let's solidify the relationship between these parameters, and what actually happens on your cluster when its created.
+- You: specify a parameter and create a "cluster" yaml.
+- Tanzu: The Cluster object is created, and the cluster yaml's topology field is read, along w/ its paramters.
+- ClusterAPI: Reads the ClusterClass and applies all of the parameters you specified.
+- ClusterClass Internals: invoke several json patches against low level CAPI objects (VsphereMachineTempalates, KubeadmConfigTemplates, and so on)...
+- Kubernetes: Stores KubeadmConfigTemplates,VSphereMachineTemplates, and other objects
+- CAPV: Reads VsphereMachineTemplates and creates VMs, injecting the kubeadm configuration and so on into a bootstrap secret of the vsphere VM
+- Your cluster eventually comes up.
+
+Lets look, for example at how `auditLogging` flows into your clusters configuration.
+
+You first will set `auditLogging: true` when making a cluster.  Then, when ClusterAPI reads the clusterclass, you'll see this code is interpolated by CAPI.
+
+```
+      - op: add
+        path: /spec/template/spec/kubeadmConfigSpec/files/-
+        value:
+          content: |
+            ---
+            apiVersion: audit.k8s.io/v1
+            kind: Policy
+            rules:
+              - level: None
+                users: ["system:serviceaccount:kube-system:kube-proxy"]
+                verbs: ["watch"]
+    ...
+    selector:
+        apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+        kind: KubeadmControlPlaneTemplate
+        matchResources:
+          controlPlane: true
+    enabledIf: '{{ .auditLogging.enabled }}'
+    name: auditLogging
+```
+
+Ultimately, then the kubeadm configuration (on your VM) will come up with audit logging and RBAC rules all setup from scratch at the clusters bootstrap.
+Now, lets look at the clusterclass in detail.
+
 ## What is a cluster class 
 
 The simplest possible cluster class you can concieve is below... we will see that
 cluster classes basically define
-- A controlplane configuration
-- A worker node configuration
-- Changes to the sub-objects of each of these
-
+- A *controlplane* configuration known as _controlplane.machineInfrastructure_
+- A *worker* configuration, known as _infrastructure_
+- A set of *patches* which modify objects in the *controlplane* or *worker*
 
 A Simple cluster class you can look at for pedagogical purposes is on the [official clusterclass docs](https://cluster-api.sigs.k8s.io/tasks/experimental-features/cluster-class/write-clusterclass.html). 
 
