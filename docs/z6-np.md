@@ -154,6 +154,7 @@ service Registration {
 about this new device
 7) The Kubelet then adds metadata to the nodes APIServer object.
 8) The scheduler can now allocate GPUs, by querying the node.status "nvidia.com/gpu" field:
+
 ```
 apiVersion: v1
 kind: Node
@@ -172,6 +173,7 @@ status:
     memory: 32100Mi
     nvidia.com/gpu: "1" <-- this is what is scheduled to the pods
 ```
+
 Note that above, we have exactly 1 gpu, because with PCI Passthrough, you only get one
 schedulable GPU card per device.
 
