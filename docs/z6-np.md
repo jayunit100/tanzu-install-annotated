@@ -85,7 +85,10 @@ type VSphereNodePool struct {
 
 ## The input for a node pool file
 
-The input for a node pool file is documented here: https://docs-staging.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.1/using-tkg-21/workload-clusters-pool.html#sample-config.
+The input for a node pool file is documented here: 
+
+**https://docs-staging.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.1/using-tkg-21/workload-clusters-pool.html#sample-config**
+
 You can see in this file that the schema is something like
 
 ```
