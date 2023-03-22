@@ -275,6 +275,8 @@ converted to a clusterbootstrap object...
 
 For example, if i have 3 clusters, then each one will have a unique **clusterbootstrap** object for 1.24... 
 
+> It appears that in older versions of TKG, the TKRs will print a clusterbootstraptemplate version, but there is no clusterbootstrap template.  It's likely the case that ClusterBootstrapTemplates are only relevant for TKRs made after 1.24, which is why the Antrea CNI default below sais "1.7" even for older versions of TKG
+
 ```
 kubo@Yk9ph4RbYmJO7:~$ kubectl get clusterbootstrap -A
 NAMESPACE    NAME          CNI                                                     CSI                                                 CPI                                                  KAPP                                                     RESOLVED_TKR
