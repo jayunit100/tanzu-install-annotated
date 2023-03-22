@@ -150,7 +150,8 @@ to read and parse PCI devices (using nvml.h)
 service Registration {
 	rpc Register(RegisterRequest) returns (Empty) {}
 }
-``` about this new device
+```
+about this new device
 7) The Kubelet then adds metadata to the nodes APIServer object.
 8) The scheduler can now allocate GPUs, by querying the node.status "nvidia.com/gpu" field:
 ```
