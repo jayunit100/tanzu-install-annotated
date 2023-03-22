@@ -181,6 +181,33 @@ Note that above, we have exactly 1 gpu, because with PCI Passthrough, you only g
 schedulable GPU card per device.
 
 
+# What about TKGS ? 
+
+In TKGS, the TanzuKubernetesCluster has a nodepool object that is explicitly defined with regard to a vmClass.
+
+```
+    nodePools:
+    - name: string 
+      labels: map[string]string
+      taints:
+        -  key: string
+           value: string
+           effect: string
+           timeAdded: time
+      replicas: int32
+      vmClass: string
+      storageClass: string
+      volumes:
+        - name: string
+          mountPath: string
+          capacity:
+            storage: size in GiB
+      tkr:  
+        reference:
+          name: string
+      nodeDrainTimeout: string
+```
+
 
 
 
