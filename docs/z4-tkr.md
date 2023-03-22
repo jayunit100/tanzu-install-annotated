@@ -363,6 +363,32 @@ spec:
 
 ```
 
+## Default objects are made by ClusterBootstrapTemplate
+
+Above we imply that you can customize antrea.  How?  Well if we make new cluster, in the `vick` namespace like so:
+
+```
+tanzu cluster create wl.yaml -n vick
+```
+
+Then we'll see that the CBT made an antrea config that was predictably named
+
+```
+kubo@ElFDZ9GG9xxnU:~$ kubectl get antreaconfig -A
+NAMESPACE    NAME                         TRAFFICENCAPMODE   DEFAULTMTU   ANTREAPROXY   ANTREAPOLICY   SECRETREF
+tkg-system   tkg-mgmt-vc-antrea-package   encap                           true          true           tkg-mgmt-vc-antrea-data-values
+tkg-system   v1.22.17---vmware.1-tkg.1    encap                           true          true           
+tkg-system   v1.23.15---vmware.1-tkg.1    encap                           true          true           
+tkg-system   v1.24.9---vmware.1-tkg.1     encap                           true          true           
+vick         tkg-vick-antrea-package      encap                           true          true           tkg-vick-antrea-data-values <--
+```
+
+We easily could have made the **tkg-vick-antrea-package** `AntreaConfig` object ourselves BEFORE creating our cluster, and then,
+we would be making a cluster with a custom antrea configuration that was managed by the APIServer for us.
+
+In previous TKG releases, custom configurations of CNI, CPI, and so on, had to be managed on the **client side**.  This is one of the major
+advancements of TKG 2.1+... The ability to do server side, declarative configuration of workload cluster add ons.
+
 ### TanzuKubernetesRelease
 
 Finally we have our TanzuKubernetesRelease object.  The important thing to note here
