@@ -197,7 +197,7 @@ image for GPUs.
 GPUs will be fully supported without the need for custom images in 2.1.1 !!!
 _
 
-## OSImage
+# TKR VSphere REsolver finds the OSImages that match your TKR
 
 The OSImage object defines a specific Operating System that will be referenced in your TKR.  When you
 tell TKG to make a new cluster, it will query all `osImages` that are compatible for your TKR, and then
@@ -208,13 +208,13 @@ pick one which matches your desired:
 
 Now, lets look at the 3 objects.
 
-### QUERY ???
+## TKR Vsphere Resolver Querys
 
 Yup, we literally query all of the CRDs to match up your OSImage in a declarative way.  There is also a more imperative
 way to select your OS, which is, to use the VSPHERE_TEMPLATE field, but that is an older, and less well documented approach for
 selecting OS Images.
 
-### OSImage
+## What is an OSImage ?
 
 An OSImage object thus defines these fields.  
 
@@ -228,13 +228,14 @@ metadata:
 spec:
   kubernetesVersion: v1.24.9+vmware.1
   os:
-    type: linux
+    type: linux <-- this is what users will specify
     name: ubuntu
     version: "2004"
     arch: amd64
   image:
     type: ova
     ref:
+      # once a match is found CAPV will launch your VM using the OVA template with THIS SPECIFIC VERSION field in it's XML
       version: v1.24.9+vmware.1-gpu-efi <-- this is important: It must match the OVA <VERSION> field !!!
 ```
 
