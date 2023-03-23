@@ -313,7 +313,7 @@ Cert manager is how CAPI webhooks authenticate to each other.  It's an implement
       Creating ValidatingWebhookConfiguration="cert-manager-webhook"
       Waiting for cert-manager to be available...
       Updating Namespace="cert-manager-test"
-      Creating Issuer="test-selfsigned" Namespace="cert-manager-test"
+      Creating Issuer="test-selfsigned" Namespace="cert-manager-test" <-- note this happens again on the mgmt cluster, sometimes takes a while though?
       ...
       Deleting Certificate="selfsigned-cert" Namespace="cert-manager-test"
 ```
