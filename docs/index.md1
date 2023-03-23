@@ -481,19 +481,22 @@ kube-system                         kube-controller-manager-tkg-mgmt-vc-9tzbw-bt
 kube-system                         etcd-tkg-mgmt-vc-9tzbw-btchv                                     1/1     Running   0             22m
 kube-system                         kube-scheduler-tkg-mgmt-vc-9tzbw-btchv                           1/1     Running   0             22m
 kube-system                         kube-apiserver-tkg-mgmt-vc-9tzbw-btchv                           1/1     Running   0             22m
-kube-system                         coredns-5776487ffb-47llq                                         1/1     Running   0             22m
-kube-system                         coredns-5776487ffb-vgsjh                                         1/1     Running   0             22m
 kube-system                         kube-proxy-n8xnx                                                 1/1     Running   0             22m
 tkg-system                          kapp-controller-64c8bdfc86-lcq2p                                 2/2     Running   0             22m
+kube-system                         kube-proxy-76mkk                                                 1/1     Running   0             20m
+
+### note: Some of these dont actually come up until AFTER antrea is up...
 cert-manager                        cert-manager-84b664ffb4-lrqxw                                    1/1     Running   0             21m
 cert-manager                        cert-manager-cainjector-6cc99f4f85-tqfc9                         1/1     Running   0             21m
 cert-manager                        cert-manager-webhook-5b85b9b58d-46ckw                            1/1     Running   0             21m
-kube-system                         kube-proxy-76mkk                                                 1/1     Running   0             20m
 kube-system                         vsphere-cloud-controller-manager-z2r5b                           1/1     Running   0             19m
 kube-system                         vsphere-csi-node-gld59                                           3/3     Running   2 (17m ago)   19m
 kube-system                         vsphere-csi-controller-658b6b6557-zvdn2                          7/7     Running   0             19m
 kube-system                         vsphere-csi-node-v2qbx                                           3/3     Running   4 (17m ago)   19m
 kube-system                         metrics-server-6ff66f4589-v2lrl                                  1/1     Running   0             19m
+kube-system                         coredns-5776487ffb-47llq                                         1/1     Running   0             22m
+kube-system                         coredns-5776487ffb-vgsjh                                         1/1     Running   0             22m
+
 ```
 #### MTMG ORDER 2: Antrea !? 
  Would assume it would come on earlier (i.e. right after kapp and kube proxy). Otherwise, how else do things like cert-manager get IP addresses ? 
