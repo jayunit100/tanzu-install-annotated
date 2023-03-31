@@ -303,7 +303,7 @@ spec:
 	        devices:
 		  deviceId: 7864
 		  workerId: 4318
-                hardwareVersion: vmx-17
+              hardwareVersion: vmx-17
 ```
 
 Note that in the below machineDeployments, we created 2 node pools, and in the second we override:
