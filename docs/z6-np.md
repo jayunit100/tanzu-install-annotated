@@ -265,6 +265,8 @@ spec:
           diskGiB: 300
           memoryMiB: 16384
           numCPUs: 4
+    - name: pci #### <--- variables.overrides will override this value below... 
+      value: {}
     version: v1.24.10+vmware.1-tkg.2
     workers:
       machineDeployments:
@@ -280,14 +282,7 @@ spec:
             run.tanzu.vmware.com/resolve-os-image: image-type=ova,os-name=ubuntu
         name: md-1-gpu
         replicas: 1
-        # ... keep reading to see how the node pools is customized... 
-```
-## VsphereMachineTemplate customization
-
-TKG can customize virtual machines by sending variable overrides into a VSphereMachineTemplate.  This is done like so.  This example doesnt 
-work fully because theres a bug in parsing of nested lists...  but we'll fix that soon !
-
-```
+	### Note that the below in tkg 2.1.1 must be created via kubectl create -f , rather then tanzu create -f...
         variables:
           overrides:
           - name: worker
@@ -295,21 +290,33 @@ work fully because theres a bug in parsing of nested lists...  but we'll fix tha
               count: 1
               machine:
                 customVMXKeys:
-                  pciPassthru.64bitMMIOSizeGB: "16"
+                  pciPassthru.64bitMMIOSizeGB: "16" 
                   pciPassthru.RelaxACSforP2P: "true"
                   pciPassthru.allowP2P: "true"
                   pciPassthru.use64bitMMIO: "true"
                 diskGiB: 300
                 memoryMiB: 16384
                 numCPUs: 4
+          - name: pci ########## <--- override this parameter w/ your PCI settings for this node pool 
+	    value:
+	      worker:
+	        devices:
+		  deviceId: 7864
+		  workerId: 4318
                 hardwareVersion: vmx-17
-                # devices:   <-- dont try this yet, its broken !
-                #   deviceId: 
-                #   vendorId:  
-                # - deviceId: 7864
-                #   vendorId: 4318
 ```
- 
+
+Note that in the below machineDeployments, we created 2 node pools, and in the second we override:
+- worker
+- pci
+Inside of the vspheremachinetemplate for the GPU node pool.
+This correlated to the pci variable we added above in our cluster variables
+```
+    - name: pci #### <--- variables.overrides will override this value below... 
+      value: {}
+```
+You don't necessarily need to add EVERYTHING you want to override to the cluster variables, but
+pci parameters (for some reason) are one such variable that DO need to be explicitly given a placeholder.
 
 
 
