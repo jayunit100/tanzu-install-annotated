@@ -181,7 +181,7 @@ Note that above, we have exactly 1 gpu, because with PCI Passthrough, you only g
 schedulable GPU card per device.
 
 
-# An example of how to make a cluster with two, node pools
+# An example of how to make a cluster with two node pools
 
 
 When making a new TKG Cluster, you can define a 2nd machinedeployment, as shown below... 
