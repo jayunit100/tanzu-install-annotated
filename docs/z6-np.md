@@ -298,11 +298,11 @@ spec:
                 memoryMiB: 16384
                 numCPUs: 4
           - name: pci
-	    value:
-	      worker:
-	        devices:
-		  deviceId: 7864
-		  workerId: 4318
+            value:
+              worker:
+               devices:
+                 deviceId: 7864
+                 workerId: 4318
               hardwareVersion: vmx-17
 ```
 
