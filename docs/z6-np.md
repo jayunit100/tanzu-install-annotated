@@ -297,7 +297,7 @@ spec:
                 diskGiB: 300
                 memoryMiB: 16384
                 numCPUs: 4
-          - name: pci ########## <--- override this parameter w/ your PCI settings for this node pool 
+          - name: pci
 	    value:
 	      worker:
 	        devices:
