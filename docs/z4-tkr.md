@@ -17,7 +17,9 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   annotations:
-    ### If we look at the `spec.topology` section, then we will see a `name` field corresponding the the TKR_DATA value.
+    ### If we look at the `spec.topology` section, 
+    ### then we will see a `name` field corresponding 
+    ### the TKR_DATA value.
     - name: TKR_DATA
       value:
         v1.24.9+vmware.1:
@@ -62,6 +64,45 @@ NAME                        VERSION                   READY   COMPATIBLE   CREAT
 v1.22.17---vmware.1-tkg.1   v1.22.17+vmware.1-tkg.1   True    True         8d
 v1.23.15---vmware.1-tkg.1   v1.23.15+vmware.1-tkg.1   True    True         8d
 v1.24.9---vmware.1-tkg.1    v1.24.9+vmware.1-tkg.1    True    True         8d
+```
+
+A TKR then has an many OSImage's associated with it which are the OS image that the kubelet runs 
+inside of... for example, one (1.24...) TKR might have:
+- an ubuntu image
+- a photon image
+- and so on... 
+
+Users then select OS_ARCH, OS_NAME, and so on, and the `tkr-vsphere-resolver` goes off and magically
+queries OSImage objects, to find the ova template which corresponds to the users requested OS parameters.
+
+From a GOVC perspective, you can look at an OVA and see that the `DefaultValue` for the `VERSION` is indeed
+the same as what is in your OsImage 
+
+### OS Image vs OVA Metadata
+OSImage
+```
+OS Image:
+Spec.
+  Ref. 
+     Image.
+         version:
+```
+Metadata
+```
+{
+              "Key": 10,
+              "ClassId": "",
+              "InstanceId": "",
+              "Id": "VERSION",
+              "Category": "Cluster API Provider (CAPI)",
+              "Label": "VERSION",
+              "Type": "string",
+              "TypeReference": "",
+              "UserConfigurable": false,
+              "DefaultValue": "v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc",
+              "Value": "",
+              "Description": ""
+}
 ```
 
 Now, picking 1.24.9... we can look at its contents `kubectl edit tkr v1.24.9---vmware.1-tkg.1`... 
