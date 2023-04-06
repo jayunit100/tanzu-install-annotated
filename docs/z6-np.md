@@ -302,7 +302,7 @@ spec:
               worker:
                devices:
                  deviceId: 7864
-                 workerId: 4318
+                 vendorId: 4318
               hardwareVersion: vmx-17
 ```
 
