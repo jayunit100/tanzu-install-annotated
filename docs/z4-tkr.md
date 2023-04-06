@@ -11,6 +11,7 @@ Typically, TKR Resolution looks something like this:
 
 ## Management Cluster version
 
+Lets start by looking at a cluster.  This is the thing you create, when you make a cluster (via `tanzu cluster create` or via `kubectl cluster create`).
 ```
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
