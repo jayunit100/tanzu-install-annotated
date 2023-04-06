@@ -4,6 +4,11 @@ The TKR has a close relationship with the management cluster version.  So, befor
 look at our management cluster.  Note, we're going to start by looking at the TKR_DATA field, which you'll understand
 much better if you read about the [WEBHOOKS](https://tanzu-install-annotated.readthedocs.io/en/latest/z3-webhooks/) article on this same site...
 
+Typically, TKR Resolution looks something like this: 
+
+<img width="1079" alt="image" src="https://user-images.githubusercontent.com/826111/230512445-05fe7276-1890-4814-ad9d-e465baf6d2c8.png">
+
+
 ## Management Cluster version
 
 ```
