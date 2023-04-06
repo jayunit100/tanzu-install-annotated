@@ -16,10 +16,7 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   annotations:
-```
-
-If we look at the `spec.topology` section, then we will see a `name` field corresponding the the TKR_DATA value.
-```
+    ### If we look at the `spec.topology` section, then we will see a `name` field corresponding the the TKR_DATA value.
     - name: TKR_DATA
       value:
         v1.24.9+vmware.1:
