@@ -22,9 +22,35 @@ Let's solidify the relationship between these parameters, and what actually happ
 - CAPV: Reads VsphereMachineTemplates and creates VMs, injecting the kubeadm configuration and so on into a bootstrap secret of the vsphere VM
 - Your cluster eventually comes up.
 
+## KubeletExtraArgs
+
+There are several "extraArgs" objects in TKG that will allow you to add arbitrary cmd line options
+to the core binaries that are used in K8s clusters (apiserver, controller manager, scheduler, kubelet, etcd).  For example.
+
+For the kubelet, you might add these extra options:
+```
+--system-cgroups string --system-reserved --tls-cert-file --tls-cipher-suites  –-profiling  ... 
+```
+
+For the apiserver, you might add these:
+```
+--tls-cipher-suites  –-audit-policy-file --anonoymous-auth –-audit-log-path --profiling -- ...
+```
+
+These objects live in the following locations (note: live nested in the KubeadmControlPlaneTemplate for the controlplane).
+- /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/controllerManager/extraArgs
+- /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/scheduler/extraArgs
+- /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/apiServer/extraArgs
+- /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/etcd/local/extraArgs
+- /spec/template/spec/kubeadmConfigSpec/joinConfiguration/nodeRegistration/kubeletExtraArgs
+
+## An example 
+
 Lets look, for example at how `auditLogging` flows into your clusters configuration.
 
 You first will set `auditLogging: true` when making a cluster.  Then, when ClusterAPI reads the clusterclass, you'll see this code is interpolated by CAPI.
+
+
 
 ```
       - op: add
