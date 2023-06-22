@@ -45,6 +45,7 @@ And the new ones are ...
  Fetching File="metadata.yaml" Provider="cluster-api" Type="CoreProvider" Version="v1.4.2"
  Fetching File="metadata.yaml" Provider="ipam-in-cluster" Type="InfrastructureProvider" Version="v0.1.0"
  Fetching File="control-plane-components.yaml" Provider="kubeadm" Type="ControlPlaneProvider" Version="v1.4.2"
+
 ```
 
 Cluster API is now 1.4.2 instead of 1.2.8.
@@ -59,4 +60,33 @@ Theres a new tkg-clusterclass package.  the `tkg-clusterclass-vsphere` is gone..
     [2023-01-10T20:09:27.780Z] successfully reconciled package: tkg-clusterclass-vsphere
 ```
 
+Will add more over time, but , here are some new features worth noting
+
+## New Field: Custom VSphere.Template
+
+```
+   workers:
+     machineDeployments:
+     - class: tkg-worker
+       metadata:
+         annotations:
+           run.tanzu.vmware.com/resolve-os-image: image-type=ova,os-name=ubuntu
+       name: md-1
+       replicas: 2
+       variables:
+         overrides:
+         - name: vcenter
+           Value:
+		cloneMode: fullClone
+             datacenter: /dc0
+             datastore: /dc0/datastore/sharedVmfs-0
+             folder: /dc0/vm/folder0
+             network: /dc0/network/VM Network
+             resourcePool: /dc0/host/cluster0/Resources/rp0
+             server: <server-ip>
+             storagePolicyID: ""
+             tlsThumbprint: <xxx>
+             datacenter: /dco
+             template: /dc0/vm/ubuntu-2004-kube-v1.24.10+vmware.1-tkg.1 <-- we now support this new template, no mor guessing the vsphere template resolvers logic 
+```
 
