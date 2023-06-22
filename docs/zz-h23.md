@@ -1,4 +1,4 @@
-# 2.3diff
+# h2.3
 
 Some notes on "differences" in TKG 2.3 from the original notes on TKG 2.1...
 
