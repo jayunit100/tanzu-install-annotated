@@ -27,7 +27,7 @@ tanzu config get | yq eval '.clientOptions.features.global.context-aware-cli-for
   ✔  successfully updated repository configuration for core
 ```
 
-##  Making sure the client plugins are there... 
+##  Making sure the client plugins are there...
 ```
   ℹ  Installing plugin 'pinniped-auth:v0.28.0-dev'
   ℹ  Installing plugin 'secret:v0.28.0-dev' with target 'kubernetes'
@@ -100,7 +100,7 @@ Ok, lets look in detail at this:
 ### To bootstrap TKG , we run 
 
 ```
-tanzu management-cluster create  --yes -v 9 --deploy-tkg-on-vSphere7 -f tkg-mgmt-vc.yaml
+tanzu management-cluster create  --yes -v 9 -f tkg-mgmt-vc.yaml
 ```
 
 ### Result: 
