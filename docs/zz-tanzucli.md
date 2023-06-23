@@ -20,9 +20,10 @@ Several of the defaults can be set by simply invoking `tanzu ... set ...`:
 ```
 09:06:57  INFO:root:====== 85   CMD: tanzu ceip-participation set false
 09:06:57  INFO:root:====== 86   CMD: tanzu config eula accept
-``
+```
 
-These edit the config file on disk: 
+These edit the config file on disk:
+
 ```
 ./.config/tanzu/config-ng.yaml:    ceipOptIn: "false"
 ...
@@ -132,6 +133,7 @@ Now, looking at the plugin binaries, we can see:
 - pinniped-auth is a *global* plugin
 - management-cluster is a *kubernetes* plugin
 - each of the plugins has a linux, darwin, and windows binary like so:
+
 ```
 |vmware|
 |linux|
