@@ -1,6 +1,6 @@
 # cli
 
-... This is a WIP... will add more next week  ....
+WIP!!!!
 
 Tanzu CLI is now independent of TKG  https://github.com/vmware-tanzu/tanzu-cli/releases/tag/v0.90.0 !
 
@@ -17,6 +17,7 @@ tanzu version
 ```
 
 Several of the defaults can be set by simply invoking `tanzu ... set ...`: 
+
 ```
 09:06:57  INFO:root:====== 85   CMD: tanzu ceip-participation set false
 09:06:57  INFO:root:====== 86   CMD: tanzu config eula accept
