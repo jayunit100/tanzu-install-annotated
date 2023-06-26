@@ -107,7 +107,33 @@ the underlying machine tempaltes.  A good example of this is PCI Passthrough, wh
 
 ## What changes in a PCI/GPU enabled VSphereMachineTemplate ? 
 
-The following fields are modified when making new VSphere machines that allow GPU workloads:
+One typical way that you'd customize GPUs would be to add a configuration like this (see Itay's post on how
+he does node pools https://cloudnativeapps.blog/tkg-gpu-integration/ for details)... 
+
+```
+...
+    - name: worker
+      value:
+        count: 1
+        machine:
+          customVMXKeys:
+            pciPassthru.64bitMMIOSizeGB: "16"
+            pciPassthru.RelaxACSforP2P: "true"
+            pciPassthru.allowP2P: "true"
+            pciPassthru.use64bitMMIO: "true"
+          diskGiB: 300
+          memoryMiB: 16384
+          numCPUs: 4
+    - name: pci
+      value:
+        worker:
+          devices:
+          - deviceId: 7864
+            vendorId: 4318
+          hardwareVersion: vmx-17
+```
+
+In this case, the following fields are modified when making new VSphere machines that allow GPU workloads:
 
 ```
 1) /spec/template/spec/hardwareVersion
