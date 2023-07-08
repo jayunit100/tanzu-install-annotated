@@ -1,0 +1,77 @@
+# WIN
+
+This article was written on TKG 2.3.0.
+
+# Windows Clusters 
+  
+Installing a TKG Windows cluster is a good way to learn about TKRs, image-builder, and so on.
+Let's go.
+
+## Links
+
+https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.2/tkg-deploy-mc-22/mgmt-byoi-windows.html 
+https://github.com/jaimegag/tkg-zone.git 
+
+(note these instructions include developer build steps so they may not be 100% reproducible for you)
+
+## Part1: Unpack TKG, install management cluster
+
+- Get the [independent Tanzu CLI](https://github.com/vmware-tanzu/tanzu-cli/releases/download/v0.90.1/tanzu-cli-linux-amd64.tar.gz
+- unzip / untar / install it in bin
+- wget your OVA from the release,  `govc import.ova ./windows-2019-kube-v1.21.2+vmware.1-tkg.1.ova`     
+
+Setup Tanzu cli:
+```
+kubo@uOFLhGS9YBJ3y:~$ tanzu plugin install --group vmware-tkg/tkg
+[i] Reading plugin inventory for "projects.registry.vmware.com/tanzu_cli/plugins/plugin-inventory:latest", this will take a few seconds.
+[i] Reading plugin inventory for "projects-stg.registry.vmware.com/tanzu_cli/plugins/sandbox/tkg-ob-468120486233034140-g57e43b84/plugin-inventory:latest", this will take a few seconds.
+[!] Skipping the plugins discovery image signature verification for "projects-stg.registry.vmware.com/tanzu_cli/plugins/sandbox/tkg-ob-468120486233034140-g57e43b84/plugin-inventory:latest"
+ 
+[i] Installing plugin 'isolated-cluster:v0.30.0-dev' with target 'global'
+[i] Installing plugin 'management-cluster:v0.30.0-dev' with target 'kubernetes'
+[i] Installing plugin 'package:v0.30.0-dev' with target 'kubernetes'
+[i] Installing plugin 'pinniped-auth:v0.30.0-dev' with target 'global'
+[i] Installing plugin 'secret:v0.30.0-dev' with target 'kubernetes'
+[i] Installing plugin 'telemetry:v0.30.0-dev' with target 'kubernetes'
+[ok] successfully installed all plugins from group 'vmware-tkg/tkg:v2.3.0'
+```
+
+Then make a management cluster
+```
+  1 CLUSTER_PLAN: dev
+  2 CNI: antrea
+  3 INFRASTRUCTURE_PROVIDER: vsphere
+  4 KUBERNETES_VERSION: v1.25.10+vmware.2
+  5 #KUBEVIP_LOADBALANCER_CIDRS: 10.180.81.109/32,10.180.81.109/32,10.180.81.109/32,10.180.81.109/32
+  6 #KUBEVIP_LOADBALANCER_ENABLE: true
+  7 OS_ARCH: amd64
+  8 OS_NAME: ubuntu
+  9 OS_VERSION: '20.04'
+ 10 _VSPHERE_CONTROL_PLANE_ENDPOINT: 10.221.159.240
+```
+
+You now run:
+```                                  
+export VSPHERE_NETWORK="/Workload 3/network/workload-dhcp-759"
+export VSPHERE_PASSWORD="z.....J"
+export VSPHERE_RESOURCE_POOL="windows"
+export VSPHERE_INSECURE=true
+export VSPHERE_FOLDER="/Workload 3/vm"
+export VSPHERE_DATASTORE=GPU
+export VSPHERE_USERNAME="shepherd-gpu@vtcc.io"
+export VSPHERE_SERVER=10.89.160.37
+export VSPHERE_DATACENTER="Workload 3"
+#####
+export DEPLOY_TKG_ON_VSPHERE7=true
+export VSPHERE_SSH_AUTHORIZED_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6VfBKd6hqd5h7k5f+AtjJSV1hdW5u9/3uAolK3SD2/5GD9+rn+FMSdbtkeaKuuVJPi2HjnsVMO+r8WcuyN5ZSYHywiSoh4S7PamAxra1CLISsFHPYFlGrtdHC70wnoT7+/wAJk2D3CYkCNMWIxs5eR0cefDOytipBfDplhkJByyrcnXuhI8St3XJzpjlXu454diJOxfsk6axanWLOr/WZFmUi1U6V4gRE7XtKG9WFUm1bmNgkgd7lehKzi+isTjnI+b4tnD0yIzKFcsgIvLdGJTI6Lluj33CeBHIocwu0LbvowTyYSqhP6DzGhGuKfK9rMnJh/ll0Bnu1xf/ok0NSQ== Jpeerindex@doolittle-5.local"
+tanzu management-cluster create --acknowledge-CEIP -y -f ./cluster.yaml
+```
+
+And your cluster will come up shortly.... 
+                                                               
+# Part2: Building your image
+
+
+
+## Part 3: 
+
