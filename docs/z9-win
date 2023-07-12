@@ -19,7 +19,8 @@ https://github.com/jaimegag/tkg-zone.git
 
 - Get the [independent Tanzu CLI](https://github.com/vmware-tanzu/tanzu-cli/releases/download/v0.90.1/tanzu-cli-linux-amd64.tar.gz
 - unzip / untar / install it in bin
-- wget your OVA from the release,  `govc import.ova ./windows-2019-kube-v1.21.2+vmware.1-tkg.1.ova`     
+- wget your OVA from the release,  `govc import.ova ./windows-2019-kube-v1.21.2+vmware.1-tkg.1.ova`
+- Mark your OVA as a template
 
 Setup Tanzu cli:
 ```
@@ -52,6 +53,15 @@ Then make a management cluster
 ```
 
 You now run:
+
+in this particular vm, my ubuntu image is at
+```
+# govc find / | grep ubuntu | grep efi
+/Workload 3/vm/GPU/ubuntu-2004-efi-kube-v1.26.5             
+```
+So my creation env vars are......
+`/$VSPHERE_FOLDER/$VSPHERE_DATASTORE/`
+and the env vars we use to creat our cluster will be
 ```                                  
 export VSPHERE_NETWORK="/Workload 3/network/workload-dhcp-759"
 export VSPHERE_PASSWORD="z.....J"
@@ -71,6 +81,9 @@ tanzu management-cluster create --acknowledge-CEIP -y -f ./cluster.yaml
 And your cluster will come up shortly.... 
                                                                
 # Part2: Building your image
+
+Now time to build your Windows OVA.  The official docs for this are here
+https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.2/tkg-deploy-mc-22/mgmt-byoi-windows.html?hWord=N4IghgNiBcIO4EsB2ATA9nAziAvkA#windows-wc
 
 
 
