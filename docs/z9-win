@@ -56,7 +56,7 @@ You now run:
 
 in this particular vm, my ubuntu image is at
 ```
-# govc find / | grep ubuntu | grep efi
+## govc find / | grep ubuntu | grep efi
 /Workload 3/vm/GPU/ubuntu-2004-efi-kube-v1.26.5             
 ```
 So my creation env vars are......
@@ -80,12 +80,22 @@ tanzu management-cluster create --acknowledge-CEIP -y -f ./cluster.yaml
 
 And your cluster will come up shortly.... 
                                                                
-# Part2: Building your image
+## Part2: Building your image
 
-Now time to build your Windows OVA.  The official docs for this are here
+
+Now time to build your Windows OVA.  
+- The official docs for this are here
 https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.2/tkg-deploy-mc-22/mgmt-byoi-windows.html?hWord=N4IghgNiBcIO4EsB2ATA9nAziAvkA#windows-wc
 
+First, lets Download ISOs... 
+
+- You can get your ISO from https://www.microsoft.com/en-us/evalcenter/download-windows-server-2022
+- You can get your VMTools ISO from https://customerconnect.vmware.com/en/downloads/details?downloadGroup=VMTOOLS1225&productId=1259&rPId=106172 
+
+Then , click on the "hamburger" icon (database) in your VCenter UI, and find your data store (named the same as your VSPHERE_DATASTORE above) and
+click "Upload Files"... at which 
 
 
-## Part 3: 
 
+
+## Part 3
