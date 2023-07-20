@@ -82,7 +82,6 @@ And your cluster will come up shortly....
                                                                
 ## Part2: Building your image
 
-
 Now time to build your Windows OVA.  
 - The official docs for this are here
 https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.2/tkg-deploy-mc-22/mgmt-byoi-windows.html?hWord=N4IghgNiBcIO4EsB2ATA9nAziAvkA#windows-wc
@@ -93,9 +92,113 @@ First, lets Download ISOs...
 - You can get your VMTools ISO from https://customerconnect.vmware.com/en/downloads/details?downloadGroup=VMTOOLS1225&productId=1259&rPId=106172 
 
 Then , click on the "hamburger" icon (database) in your VCenter UI, and find your data store (named the same as your VSPHERE_DATASTORE above) and
-click "Upload Files"... at which 
+click "Upload Files"... at which  point youll now launch a windows VM in vsphere, 
+which will be customized by image builder like so.... 
+
+## 1 windows burrito
+Create your burrito
+```
+# Create the windows "burrito" 
+apiVersion: v1
+kind: Namespace
+metadata:
+ name: imagebuilder
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: imagebuilder-wrs
+ namespace: imagebuilder
+spec:
+ selector:
+   app: image-builder-resource-kit
+ type: NodePort
+ ports:
+ - port: 3000
+   targetPort: 3000
+   nodePort: 30008
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: image-builder-resource-kit
+ namespace: imagebuilder
+spec:
+ selector:
+   matchLabels:
+     app: image-builder-resource-kit
+ template:
+   metadata:
+     labels:
+       app: image-builder-resource-kit
+   spec:
+     nodeSelector:
+       kubernetes.io/os: linux
+     containers:
+     - name: windows-imagebuilder-resourcekit
+       image: projects.registry.vmware.com/tkg/windows-resource-bundle:v1.25.7_vmware.2-tkg.1
+       imagePullPolicy: Always
+       ports:
+         - containerPort: 3000
+```
+
+## 2 Make your image builder JSON
+
+This will be the input to image builde,r it tells it
+- what the URL of the burrito ( http://10.221.159.247:30008 ) is (Which has all your exe's)
+- wether to use containerd or docker
+- where the windows ISO you downloaded is
+- how to acess vsphere (so that it can make a windows VM)
+
+Once you give it this info, you can use docker to run image-builder (its basically a big ansible
+script that jumps into vsphere, makes a windows VM, and then kubernetizes the VM).
+
+```
+{
+  "additional_executables_destination_path": "C:\\ProgramData\\Temp",                                                                                             
+  "additional_executables_list": "http://10.221.159.247:30008/files/antrea-windows/antrea-windows-advanced.zip,http://10.221.159.247:30008/files/kubernetes/kube-proxy.exe",                                                                                                                                                      "additional_executables": "true",                                                                                                                               "additional_prepull_images": "mcr.microsoft.com/windows/servercore:ltsc2019",                                                                                   "build_version": "windows-2019-kube-v1.25.7",                                                                                                                   "cloudbase_init_url": "http://10.221.159.247:30008/files/cloudbase_init/CloudbaseInitSetup_1_1_4_x64.msi",                                                      "cluster": "VSPHERE-CLUSTER-NAME",                                                                                                                              "containerd_sha256_windows": "2e0332aa57ebcb6c839a8ec807780d662973a15754573630bea249760cdccf2a",                                                              
+  "containerd_url": "http://10.221.159.247:30008/files/containerd/cri-containerd-v1.6.18+vmware.1.windows-amd64.tar",                                             
+  "containerd_version": "v1.6.18",
+  "goss_inspect_mode": "true",                                                                                                                                    
+  "insecure_connection": "true",                                                                                                                                
+  "kubernetes_base_url": "http://10.221.159.247:30008/files/kubernetes/",                                                                                         
+  "kubernetes_semver": "v1.25.7+vmware.2",                                                                                                                        
+  "kubernetes_series": "v1.25.7",                                                                                                                                 
+  "linked_clone": "false",                                                                                                                                        
+  "load_additional_components": "true",                                                                                                                         
+  "netbios_host_name_compatibility": "false",                                                                                                                     
+  "network": "/Workload 3/network/workload-dhcp-759",                                                                                                             
+  "nssm_url": "http://10.221.159.247:30008/files/nssm/nssm.exe",                                                                                                  
+  "os_iso_path": "[vsanDatastore] iso/SERVER_EVAL_x64FRE_en-us.iso",                                                                                              
+  "password": "xxxxxxxxx",                                                                                                                              
+  "pause_image": "mcr.microsoft.com/oss/kubernetes/pause:3.6",                                                                                                    
+  "prepull": "false",                                                                                                                                             
+  "resource_pool": "",                                                                                                                                          
+  "runtime": "containerd",                                                                                                                                        
+  "template": "",                                                                                                                                                 
+  "username": "shepherd-gpu@vtcc.io",                                                                                                                             
+  "vcenter_server": "10.89.160.37",                                                                                                                               
+  "vmtools_iso_path": "iso/VMware-tools-windows-12.1.5.iso",                                                                                                    
+  "windows_updates_categories": "CriticalUpdates SecurityUpdates UpdateRollups",                                                                                
+  "windows_updates_kbs": "",                                                                                                                                    
+  "wins_version": ""                                                                                                                                            
+}    
+```
+
+## 3 image builder command
+
+docker run -it \ 
+--rm \
+--mount type=bind,source=$(pwd)/image-builder/image-builder-input-spec.json,target=/windows.json \
+--mount type=bind,source=$(pwd)/image-builder/autounattend.xml,target=/home/imagebuilder/packer/ova/windows/windows-2019/autounattend.xml -e PACKER_VAR_FILES="/windows.json" -e IB_OVFTOOL=1 -e IB_OVFTOOL_ARGS='--skipManifestCheck' -e PACKER_FLAGS='-force -on-error=ask' \
+-t projects.registry.vmware.com/tkg/image-builder:v0.1.13_vmware.3 build-node-ova-vsphere-windows-2019   
+```
+
+## 4 image builder issues?
+
+- make sure you named your files properly`
 
 
 
 
-## Part 3
+
