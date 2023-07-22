@@ -1,7 +1,13 @@
-# WIN
-....... THIS IS A WIP.......
+# WIN-imgbld
 
-This article was written on TKG 2.3.0.
+This article was written on TKG 2.3.0... It looks at what image-builder does when making windows nodes.
+Note you can also use image builder to customize Linux nodes, and TKG itself uses image-builder
+to generate its golden image that you get from customer connect.
+
+However the most common requirement for image-builder usage from an end user perspective, is when making Windows images, 
+bc its illegal to distribute windows OVAs - thus we don't ship them in customer connect, but rather, we 
+give users directions on how to make their own Kubnernetes OVAs which can be used to create windows worker nodes for
+running legacy containerized windows workloads.
 
 # Windows Clusters 
   
