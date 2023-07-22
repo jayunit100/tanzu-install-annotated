@@ -1,4 +1,4 @@
-# (((( WIP )))) WIN
+# WIN
 ....... THIS IS A WIP.......
 
 This article was written on TKG 2.3.0.
