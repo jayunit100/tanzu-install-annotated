@@ -21,6 +21,226 @@ https://github.com/jaimegag/tkg-zone.git
 
 (note these instructions include developer build steps so they may not be 100% reproducible for you)
 
+## Cloudbase init
+
+The `image-builder` repository (https://github.com/kubernetes-sigs/image-builder/) Defines a make target:
+
+```
+images/capi/Makefile:   $(if $(findstring windows,$@),
+packer build $(PACKER_WINDOWS_NODE_FLAGS)
+-var-file="packer/ova/packer-common.json"
+-var-file="$(abspath packer/ova/$(subst build-node-ova-vsphere-,,$@).json)"
+-only=file $(ABSOLUTE_PACKER_VAR_FILES)
+
+packer/ova/packer-windows.json,)
+```
+
+The `packer-windows.json` (https://github.com/kubernetes-sigs/image-builder/blob/main/images/capi/packer/ova/packer-windows.json) file is , the input to the `packer build` step , which builds a windows OVA:
+
+## packer windwos json
+
+This file has multiple "builders"...
+
+Four types of provisioners are used:
+
+- Ansible provisioner for running the node_windows.yml playbook with specific extra arguments.
+- Windows-restart provisioner to restart the Windows system.
+- Goss provisioner for running GOSS tests with a specific configuration. This could potentially include Kubernetes-related tests depending on what's defined in the user's goss_tests_dir.
+
+
+```
+{
+  "builders": [
+    {
+      "content": "{\n \"unattend_timezone\" : \"{{user `unattend_timezone`}}\"\n}",
+      "target": "./packer_cache/unattend.json",
+      "type": "file"
+    },
+    {
+      "boot_wait": "{{user `boot_wait`}}",
+      "communicator": "winrm",
+      "cpus": "{{user `cpu`}}",
+      "disk_adapter_type": "scsi",
+      "disk_size": "{{user `disk_size`}}",
+      "disk_type_id": "{{user `disk_type_id`}}",
+      "floppy_dirs": [
+        "./packer/ova/windows/pvscsi"
+      ],
+      "floppy_files": [
+      ],
+      "guest_os_type": "{{user `local_guest_os_type`}}",
+      "http_port_max": "{{user `http_port_max`}}",
+      "http_port_min": "{{user `http_port_min`}}",
+      "iso_checksum": "{{user `iso_checksum` }}",
+      "iso_urls": [
+        "{{user `os_iso_url`}}"
+      ],
+      "memory": "{{user `memory`}}",
+      "name": "vmware-iso",
+      "output_directory": "{{user `output_dir`}}",
+      "shutdown_command": "powershell A:/sysprep.ps1",
+      "shutdown_timeout": "1h",
+      "type": "vmware-iso",
+      "version": "{{user `vmx_version`}}",
+      "vm_name": "{{user `build_version`}}",
+      "vmdk_name": "{{user `build_version`}}",
+      "vmx_data": {
+        "numvcpus": "4",
+        "scsi0.virtualDev": "pvscsi"
+      },
+      "winrm_password": "S3cr3t0!",
+      "winrm_timeout": "4h",
+      "winrm_username": "Administrator"
+    },
+    {
+      "CPUs": "{{user `cpu`}}",
+      "RAM": "{{user `memory`}}",
+      ...
+      "disk_controller_type": "{{user `disk_controller_type`}}",
+      "export": {
+        "force": true,
+        "output_directory": "{{user `output_dir`}}"
+      },
+      "firmware": "bios",
+      "floppy_dirs": [
+        "./packer/ova/windows/pvscsi"
+      ],
+```
+we next see that the "floppy_files" sectino has all the stuff you will make as inputs to a base windwos machine that
+an IT dept might setup, for example, instructions on autoattend or winrm configuration. 
+```
+      "floppy_files": [
+        "./packer/ova/windows/{{user `build_name`}}/autounattend.xml",
+        "./packer/ova/windows/disable-network-discovery.cmd",
+        "./packer/ova/windows/disable-winrm.ps1",
+        "./packer/ova/windows/enable-winrm.ps1",
+        "./packer/ova/windows/sysprep.ps1"
+      ],
+      "folder": "{{user `folder`}}",
+      "guest_os_type": "{{user `vsphere_guest_os_type`}}",
+      "host": "{{user `host`}}",
+      "http_port_max": "{{user `http_port_max`}}",
+      "http_port_min": "{{user `http_port_min`}}",
+      "insecure_connection": "{{user `insecure_connection`}}",
+      "iso_paths": [
+        "{{user `os_iso_path`}}",
+        "{{user `vmtools_iso_path`}}"
+      ],
+      "name": "vsphere",
+      "network_adapters": [
+        {
+          "network": "{{user `network`}}",
+          "network_card": "{{user `network_card`}}"
+        }
+      ],
+      "password": "{{user `password`}}",
+      "resource_pool": "{{user `resource_pool`}}",
+      "shutdown_command": "powershell A:/sysprep.ps1",
+      "shutdown_timeout": "1h",
+      "storage": [
+        {
+          "disk_size": "{{user `disk_size`}}",
+          "disk_thin_provisioned": "{{user `disk_thin_provisioned`}}"
+        }
+      ],
+```
+next we setup winRM login data so that we can remotely run commands against this machine
+after booting it, to begin getting it ready to be a k8s node
+```
+      "type": "vsphere-iso",
+      "username": "{{user `username`}}",
+      "vcenter_server": "{{user `vcenter_server`}}",
+      "vm_name": "{{user `build_version`}}",
+      "vm_version": "{{user `vmx_version`}}",
+      "winrm_insecure": true,
+      "winrm_password": "S3cr3t0!",
+      "winrm_timeout": "4h",
+      "winrm_username": "Administrator"
+    }
+  ],
+```
+We define provisioners in this file which 
+```
+  "provisioners": [
+    {
+      "except": "file",
+      "extra_arguments": [
+        "-e",
+        "ansible_winrm_server_cert_validation=ignore",
+        "--extra-vars",
+        "{{user `ansible_common_vars`}}",
+        "--extra-vars",
+        "{{user `ansible_extra_vars`}}",
+        "--extra-vars",
+        "{{user `ansible_user_vars`}}"
+      ],
+      "playbook_file": "ansible/windows/node_windows.yml",
+      "type": "ansible",
+      "use_proxy": false,
+      "user": "Administrator"
+    },
+    {
+      "except": "file",
+      "restart_check_command": "powershell -command \"& {if ((get-content C:\\ProgramData\\lastboot.txt) -eq (Get-WmiObject win32_operatingsystem).LastBootUpTime) {Write-Output 'Sleeping for 600 seconds to wait for reboot'; start-sleep 600} else {Write-Output 'Reboot complete'}}\"",
+      "restart_command": "powershell \"& {(Get-WmiObject win32_operatingsystem).LastBootUpTime > C:\\ProgramData\\lastboot.txt; Restart-Computer -force}\"",
+      "type": "windows-restart"
+    },
+...
+      "inline": [
+        "rm -Force -Recurse C:\\var\\log\\kubelet\\*"
+      ],
+      "type": "powershell"
+    }
+  ],
+...
+```
+We'll see the rm -Force command run later when we look at all the image-builder run logs.  This is one of the final 
+steps in image-building.
+
+Now, we have "variables" that are inputs to this packer windows image builder.  The variables are listed below, and you can 
+customize these in when you build your TKG windows image:
+
+```
+  "variables": {
+    "additional_debug_files": null,
+    "ansible_common_vars": "",
+    "ansible_extra_vars": "",
+    "ansible_user_vars": "",
+    "build_name": null,
+    "build_timestamp": "{{timestamp}}",
+    "build_version": "{{user `build_name`}}-kube-{{user `kubernetes_semver`}}",
+    "cloudbase_init_url": "https://github.com/cloudbase/cloudbase-init/releases/download/{{user `cloudbase_init_version`}}/CloudbaseInitSetup_{{user `cloudbase_init_version` | replace_all `.` `_` }}_x64.msi",
+    "cloudbase_metadata_services": "cloudbaseinit.metadata.services.vmwareguestinfoservice.VMwareGuestInfoService",
+    "cloudbase_metadata_services_unattend": "cloudbaseinit.metadata.services.vmwareguestinfoservice.VMwareGuestInfoService",
+    "cloudbase_plugins": "cloudbaseinit.plugins.windows.createuser.CreateUserPlugin, cloudbaseinit.plugins.common.setuserpassword.SetUserPasswordPlugin, cloudbaseinit.plugins.windows.extendvolumes.ExtendVolumesPlugin, cloudbaseinit.plugins.common.userdata.UserDataPlugin, cloudbaseinit.plugins.common.ephemeraldisk.EphemeralDiskPlugin, cloudbaseinit.plugins.common.mtu.MTUPlugin, cloudbaseinit.plugins.common.sethostname.SetHostNamePlugin,  cloudbaseinit.plugins.common.sshpublickeys.SetUserSSHPublicKeysPlugin, cloudbaseinit.plugins.common.localscripts.LocalScriptsPlugin, cloudbaseinit.plugins.windows.createuser.CreateUserPlugin, cloudbaseinit.plugins.windows.extendvolumes.ExtendVolumesPlugin",
+    "cloudbase_plugins_unattend": "cloudbaseinit.plugins.common.mtu.MTUPlugin",
+    "containerd_sha256": null,
+    "containerd_url": "",
+    "containerd_version": null,
+    "disable_hypervisor": null,
+    "disk_size": "81920",
+    "http_port_max": "",
+    "http_port_min": "",
+    "ib_version": "{{env `IB_VERSION`}}",
+    "kubernetes_base_url": "https://kubernetesreleases.blob.core.windows.net/kubernetes/{{user `kubernetes_semver`}}/binaries/node/windows/{{user `kubernetes_goarch`}}",
+    "kubernetes_http_package_url": "",
+    "kubernetes_typed_version": "kube-{{user `kubernetes_semver`}}",
+    "manifest_output": "manifest.json",
+    "netbios_host_name_compatibility": null,
+    "nssm_url": null,
+    "output_dir": "./output/{{user `build_version`}}",
+    "prepull": null,
+    "unattend_timezone": "Pacific Standard Time",
+    "windows_service_manager": null,
+    "windows_updates_categories": null,
+    "windows_updates_kbs": null,
+    "wins_url": "https://github.com/rancher/wins/releases/download/v{{user `wins_version`}}/wins.exe"
+  }
+}
+```
+We'll see all this happen shortly, when we create a windows image.  First we'll create a Mgmt cluster.
+Of course if you already have a Mgmt cluster and only want to make a windows Workload cluster... skip this section.
+
 ## Part1: Unpack TKG, install management cluster
 
 - Get the [independent Tanzu CLI](https://github.com/vmware-tanzu/tanzu-cli/releases/download/v0.90.1/tanzu-cli-linux-amd64.tar.gz
