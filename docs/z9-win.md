@@ -37,7 +37,7 @@ packer/ova/packer-windows.json,)
 
 The `packer-windows.json` (https://github.com/kubernetes-sigs/image-builder/blob/main/images/capi/packer/ova/packer-windows.json) file is , the input to the `packer build` step , which builds a windows OVA:
 
-## packer windwos json
+## packer windwow json
 
 This file has multiple "builders"...
 
