@@ -382,6 +382,12 @@ This will be the input to image builde,r it tells it
 Once you give it this info, you can use docker to run image-builder (its basically a big ansible
 script that jumps into vsphere, makes a windows VM, and then kubernetizes the VM).
 
+Note for TKG 2.3, youll want to use 1.26.5 as the k8s version instead of 1.25....and modify the parameters below
+```
+-  "build_version": "windows-2019-kube-v1.25.7",
++  "build_version": "windows-2019-kube-v1.26.5",                                                                                                                        - "kubernetes_semver": "v1.25.7+vmware.2",                                                                                                                              - "kubernetes_series": "v1.25.7",                                                                                                                                       + "kubernetes_semver": "v1.26.5+vmware.2",                                                                                                                              + "kubernetes_series": "v1.26.5",
+```
+Then the OVA will come out looking like `windows-2019-kube-1.26.5`.
 ```
 {
   "additional_executables_destination_path": "C:\\ProgramData\\Temp",                                                                                             
