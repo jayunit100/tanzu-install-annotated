@@ -9,6 +9,9 @@ Typically, TKR Resolution looks something like this:
 <img width="1079" alt="image" src="https://user-images.githubusercontent.com/826111/230512445-05fe7276-1890-4814-ad9d-e465baf6d2c8.png">
 
 
+
+
+
 ## Management Cluster version
 
 Lets start by looking at a cluster.  This is the thing you create, when you make a cluster (via `tanzu cluster create` or via `kubectl cluster create`).
@@ -47,7 +50,7 @@ metadata:
             moid: vm-48
             template: /dc0/vm/ubuntu-2004-kube-v1.24.9+vmware.1-tkg.1
             version: v1.24.9+vmware.1-tkg.1-b030088fe71fea7ff1ecb87a4d425c93
-    version: v1.24.9+vmware.1 <-- this version defines TKR compatibility
+    version: v1.24.9+vmware.1 <-- this version defines TKR you will use, it is AUTOMATICALLY updated by TKG when you make a cluster
 ```
 The field at the bottom, `version`, is the "left hand side" of our compatibility equation. 
 A particular management cluster is compatible with many TKRs.
@@ -87,7 +90,37 @@ Spec.
      Image.
          version:
 ```
-Metadata
+
+- the TKR references many OSImages
+- Each and every OSImage has a spec.ref.image.version
+- the spec.ref.image.version of OSImage maps to the `metadata.json` VERSION value of an OVA that you build
+
+## Debugging osimage/ova/tkr issues
+
+To debug any issue such as "Could not resolve TKR/OSImage" or "unable to find VM template"... you must know this!
+
+- When you run tanzu cluster create -f abcd.yaml
+- tanzu cli sends TKR cluster creation info to APIServer the topology controller reads that info …
+- TKR Controller MAnager tries to do a  QUERY of OSImage objects, which match my abcd.yaml input
+- IF Query DOES NOT match: could not resolve TKR/OSImage
+- IF Query  DOES match: TKR VSphere Webhook activated AND then it Looks in VCenter for an OVA w/ <VERSION> = osimage.spec.image.ref.version
+- IF the TKR VSphere Webhook fails to find the OVA w/ <VERSION> metadata = spec.ref.image.version ERROR: unable to find VM template associated with OVA Version ... 
+
+So the TKR and OSimage form a tree:
+
+```
+TKR 1.26.5–vmware.2-tkgs.1-rc.3
+  OSImage - name: v1.26.5---vmware.1-tkg.1-windows
+  OSImage - name: v1.26.5---vmware.2-tkg.1-814430d158ce7889d5a7b60efeda67ca
+     (ova you uploaded has <Version>v1.26.5---vmware.2-tkg.1-814430d158ce7889d5a7b60efeda67ca</Version> baked into it)
+```
+We can see this metadata via Govc !!!
+
+```
+govc vm.info -json /dc0/vm/ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1 | grep DefaultValue
+```
+And we'll see.... 
+
 ```
 {
               "Key": 10,
