@@ -29,8 +29,9 @@ Let's go.
 
 ## Links
 
-https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.2/tkg-deploy-mc-22/mgmt-byoi-windows.html 
-https://github.com/jaimegag/tkg-zone.git 
+- 2.2: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.2/tkg-deploy-mc-22/mgmt-byoi-windows.html 
+- 2.3: https://docs-staging.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.3/using-tkg/workload-clusters-advanced-vsphere.html#windows
+- Extras: https://github.com/jaimegag/tkg-zone.git 
 
 (note these instructions include developer build steps so they may not be 100% reproducible for you)
 
