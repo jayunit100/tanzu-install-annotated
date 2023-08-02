@@ -1,5 +1,18 @@
 # WIN-imgbld
 
+<img width="1386" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/68219ea8-39b6-42b4-aed7-c7648c78a0ca">
+
+To understand image builder, and how it related to TKG, you have to understand TKRs.
+
+- TKRs reference OSImages
+- OSImages reference OVA details, including <Version> field and template (sometimes)
+- The value in VSphereMachineTemplates of the underlying OVAs location that will be created from OsImage metadata
+
+Now, lets see how we build images that we plugin into the `OsImage -> TKR` workflow. See the *TKR* page if you want to learn
+more about the TKR stuff.
+
+# Lets make windows clusters
+
 This article was written on TKG 2.3.0... It looks at what image-builder does when making windows nodes.
 Note you can also use image builder to customize Linux nodes, and TKG itself uses image-builder
 to generate its golden image that you get from customer connect.
@@ -2720,3 +2733,27 @@ At this point you can see image builder beggining to clean up after itself.... r
 ```
 
 And thats it.  The ova is now loaded in our windows cluster and can be used by TKG to make a Windows Cluster!
+
+
+## Windows OSImage debugging
+
+Now, if you get far enough that you didnt get "Couldnt find TKR/OSImage" errors (in other words, your metadata for the TKR and OSImage are correct), you might see this...
+when running kubectl get vspheremachines to see why your windows node didnt come up:
+```
+default      windows-cluster-control-plane-qcpj8-g28wg                   windows-cluster                   true    vsphere://42146165-7eb2-c15d-6f57-d451dbb37110   4m39s                                                                             
+default      windows-cluster-md-0-infra-s4t55-z9c6x                      windows-cluster                                                                            4m42s    
+```
+
+in this case you might see
+```
+  - lastTransitionTime: "2023-08-02T15:28:35Z"                                                                                                                                                                                                        
+    message: 'unable to find template by name "/dc0/vm/windows-2019-kube-v1.26.5+vmware.1-tkg.1":                                                                                                                                                     
+      vm ''/dc0/vm/windows-2019-kube-v1.26.5+vmware.1-tkg.1'' not found'                                                                                                                                                                              
+    reason: CloningFailed                                                                                                                                                                                                                             
+    severity: Warning                                                                                                                                                                                                                                 
+    status: "False"                                                                                                                                                                                                                                   
+    type: Ready
+```
+
+This would imply that the path you gave to your OSImage was incorrect.  In otherwords, you didnt put the right value in for the `template` of the Windows image.
+
