@@ -5,10 +5,19 @@ look at our management cluster.  Note, we're going to start by looking at the TK
 much better if you read about the [WEBHOOKS](https://tanzu-install-annotated.readthedocs.io/en/latest/z3-webhooks/) article on this same site...
 
 Typically, TKR Resolution looks something like this: 
+- User makes Cluster object referencing declarative properties (osname, ostype, osversion)
+- TKR references OSImage CRD, which has labels that allow that tkr resolver components
+```
+tkg-system                          tkr-conversion-webhook-manager-fcbccd57b-z92vb                        1/1     Running     1 (4d21h ago)   19d                                                                                                     
+tkg-system                          tkr-resolver-cluster-webhook-manager-6bb76bb64f-f5vv6                 1/1     Running     0               2d                                                                                                      
+tkg-system                          tkr-source-controller-manager-7b9478df78-kwscj                        1/1     Running     1 (4d21h ago)   19d                                                                                                     
+tkg-system                          tkr-status-controller-manager-57946d88b6-xt2zz                        1/1     Running     1 (4d21h ago)   19d                                                                                                     
+tkg-system                          tkr-vsphere-resolver-webhook-manager-5568b69b8b-d7svx                 1/1     Running     1 (4d21h ago)   19d
+```
+to ultimately find the underlying OSImage that a user wants.
+- Once that OSImage is found by querying the OSImage CRDs, tanzus `tkr-vsphere-resolver` webhook confirms that indeed the OSIMage's OVA actually exists.
 
-<img width="1079" alt="image" src="https://user-images.githubusercontent.com/826111/230512445-05fe7276-1890-4814-ad9d-e465baf6d2c8.png">
-
-
+<img width="1051" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/3cc5f10a-5e52-4679-a16b-e18bdeb62717">
 
 
 
