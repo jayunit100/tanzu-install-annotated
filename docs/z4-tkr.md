@@ -1,5 +1,36 @@
 # TKR
 
+## 2.3 update: --tkg-version optimization
+
+To make the tkr controller more efficient, we no longer need to integrate all TKR pulls into the bootstrap process,
+b/c tkr-source-controller is now version aware, and it pulls only relevant TKR versions down for its given current TKR
+mgmt cluster version.
+
+That is, In TKG 2.3, a new argument `--tkg-version` is introduced into this controller.
+
+Now, when you run `tanzu mc init`, packages on the mgmt cluster are upgraded and a new argument, the `--tkg-version` value, can be seen in the `tkr-source-controller-manager` deployment.
+```
+spec:                                                                                                                                      
+  containers:
+    args:                                                                                                                                      - --metrics-bind-addr=0
+    - --sa-name=tkr-source-controller-manager-sa
+    - --namespace=tkg-system
+    - --legacy-namespace=tkr-system
+    - --bom-image-path=projects-stg.registry.vmware.com/tkg/tkr-bom                                                                            - --bom-metadata-image-path=projects-stg.registry.vmware.com/tkg/v26-v2.3.0-rc.3/tkr-compatibility
+    - --tkg-version=v2.3.0-rc.3 ####### <------- NEW !!!!!!
+    - --tkr-repo-image-path=projects-stg.registry.vmware.com/tkg/tkr-repository-vsphere-nonparavirt                                            - --initial-discover-frequency=60
+    - --continuous-discover-frequency=600
+    - --infra-provider=vsphere                                                                                                                 command:                                                                                                                                   - /manager                                                                                                                                 mage: projects-stg.registry.vmware.com/tkg/tanzu_core/tkr/tkr-source-controller@sha256:181b40c91759b2913c6feb92356322db237cb9e43d1b45
+b8fe70f1e9657fc864  
+```
+
+- tanzu mc upgrade first upgrades the tkr controller,
+- then the tkr controller (normally should) sees a new valid TKR ,
+- then makes it available (i.e. tanzu kubernetes-release get shows it)
+- and then the upgrade can start 
+
+# TKR
+
 The TKR has a close relationship with the management cluster version.  So, before we look at the TKR, lets
 look at our management cluster.  Note, we're going to start by looking at the TKR_DATA field, which you'll understand
 much better if you read about the [WEBHOOKS](https://tanzu-install-annotated.readthedocs.io/en/latest/z3-webhooks/) article on this same site...
