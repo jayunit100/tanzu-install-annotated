@@ -1,5 +1,20 @@
 # CC
 
+
+# UPDATEs in 2.3
+
+Note that the path: `/spec/template/spec/preKubeadmCommands/-` has replaced the older `/spec/template/spec/kubeadmConfigSpec/preKubeadmCommands/-` 
+
+```
+kubo@uOFLhGS9YBJ3y:~$ kubectl get kubeadmconfigtemplate linux-cluster-md-0-bootstrap-hzmdn -o json | jq .spec.template.spec.preKubeadmCommands                     [                                                                                                                                                                    "hostname \"{{ ds.meta_data.hostname }}\"",                                                                                                                      
+  "echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",                                                                                                   "echo \"127.0.0.1   localhost\" >>/etc/hosts",                                                                                                                     "echo \"127.0.0.1   {{ ds.meta_data.hostname }}\" >>/etc/hosts",                                                                                                 
+  "echo \"{{ ds.meta_data.hostname }}\" >/etc/hostname",                                                                                                             "sed -i 's|\".*/pause|\"projects-stg.registry.vmware.com/tkg/pause|' /etc/containerd/config.toml",                                                                 "systemctl restart containerd"                                                                                                                                   
+]
+```
+
+# 2.1
+
+
 TKG 2.1+ Uses clusterclasses by default and we reference them many times here.
 
 ## What is a cluster ? 
