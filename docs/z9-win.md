@@ -2864,17 +2864,118 @@ You should then see logs which look something like this:
 
 ## PACKAGES !!
 
-After your node comes up , you might not have a CNI running if theres an antrea issue.  In that case youll see: 
+After your node comes up , you might not have a CNI running if theres an antrea issue.  
+
+
+In that case youll see: 
 
 ```
-  run.tanzu.vmware.com/os-image: v1.26.5---vmware.1-tkg.1-windows                                                                                                                                                       name: windows-cluster-md-0-lmncw-5d8988948xd8c9q-mvdjn                                                                                                                                                                  resourceVersion: "2581482"                                                                                                                                                                                            
-  uid: 105dc1c7-0d4e-41a2-bcdf-064e0f0791b0                                                                                                                                                                             spec:                                                                                                                                                                                                                     podCIDR: 100.99.88.0/24                                                                                                                                                                                                 podCIDRs:                                                                                                                                                                                                               - 100.99.88.0/24                                                                                                                                                                                                      
-  taints:                                                                                                                                                                                                                 - effect: NoSchedule                                                                                                                                                                                                      key: os                                                                                                                                                                                                                 value: windows                                                                                                                                                                                                        - effect: NoSchedule                                                                                                                                                                                                  
-    key: node.cloudprovider.kubernetes.io/uninitialized                                                                                                                                                                     value: "true"                                                                                                                                                                                                       status:                                                                                                                                                                                                                   addresses:                                                                                                                                                                                                              - address: 10.221.159.225                                                                                                                                                                                             
-    type: InternalIP                                                                                                                                                                                                      - address: windows-cluster-md-0-lmncw-5d8988948xd8c9q-mvdjn                                                                                                                                                               type: Hostname                                                                                                                                                                                                        allocatable:                                                                                                                                                                                                              cpu: "2"                                                                                                                                                                                                            
-    ephemeral-storage: "38322513038"                                                                                                                                                                                        memory: 4091380Ki                                                                                                                                                                                                       pods: "110"      
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this file will be
+# reopened with the relevant failures.
+#
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    kubeadm.alpha.kubernetes.io/cri-socket: npipe:////./pipe/containerd-containerd
+    node.alpha.kubernetes.io/ttl: "0"
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2023-08-16T12:01:46Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: windows
+    image-type: ova
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: windows-cluster-md-0-lmncw-5d8988948xd8c9q-mvdjn
+    kubernetes.io/os: windows
+    node.kubernetes.io/windows-build: 10.0.17763
+    os-name: windows
+    os-type: windows
+    run.tanzu.vmware.com/os-image: v1.26.5---vmware.1-tkg.1-windows
+  name: windows-cluster-md-0-lmncw-5d8988948xd8c9q-mvdjn
+  resourceVersion: "2581482"
+  uid: 105dc1c7-0d4e-41a2-bcdf-064e0f0791b0
+```
+Now reading more of the node YAML , we will see the windows pods arent schedulable.... 
+```
+spec:
+  podCIDR: 100.99.88.0/24
+  podCIDRs:
+  - 100.99.88.0/24
+  taints:
+  - effect: NoSchedule
+    key: os
+    value: windows
+  - effect: NoSchedule   ##### <--------------------------- UNINITIALIZED !!!
+    key: node.cloudprovider.kubernetes.io/uninitialized
+    value: "true"
+status:
+  addresses:
+  - address: 10.221.159.225
+    type: InternalIP
+  - address: windows-cluster-md-0-lmncw-5d8988948xd8c9q-mvdjn
+    type: Hostname
+  allocatable:
+    cpu: "2"
+    ephemeral-storage: "38322513038"
+    memory: 4091380Ki
+    pods: "110"
+  capacity:
+    cpu: "2"
+    ephemeral-storage: 41582588Ki
+```
+
+## What is an uninitialized node? 
+
+Above we can see this on our windows node
+```
+  taints:
+  - effect: NoSchedule
+    key: os
+    value: windows
+  - effect: NoSchedule
+    key: node.cloudprovider.kubernetes.io/uninitialized
+    value: "true"
+status:
+```
+If you go to https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/cloud-provider/api/well_known_taints.go, then you'll find that 
+this happens if 
+- the kubelet is started with a `--cloud-controller-manager` option and
+- the `--cloud-controller-manager` option has not yet verified that the node is ready
+
+Ok.  So, why would that be?  Looking at the `vsphere-cloud-controller-manager-kjmz5` logs in my workload cluster, I saw:
 
 ```
+I0816 14:48:00.339503       1 search.go:186] Did not find node windows-cluster-md-0-lmncw-5d8988948xd8c9q-gs2qk in vc=10.89.160.37 and datacenter=Workload 3
+E0816 14:48:00.339522       1 nodemanager.go:152] WhichVCandDCByNodeID failed using VM name. Err: No VM found
+E0816 14:48:00.339530       1 nodemanager.go:197] shakeOutNodeIDLookup failed. Err=No VM found
+E0816 14:48:00.339539       1 node_controller.go:258] Error getting instance metadata for node addresses: error fetching node by provider ID: node not found, and error by node name: node not found
+```
+Looking closely at the node, we can see the 
+- DNS Name: `WIN-VG0GDVSO6FE`
+- but cloud provider wants to look up `DNS Name:	windows-cluster-dt6bx-89h92` to identify the node
+<img width="1522" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/ebda913a-0e1e-4566-9020-0e9b61a8a8f0">
+
+A chain of events that can cause this uninitialized taint is as follows: 
+- The reason why the node is marked uninitialized, is because the windows *DNS name* is wrong
+- The *DNS name* is wrong because *cloud init doesnt complete*
+- *cloud init doesnt complete*, because postKubeadmCommands didnt complete
+- postKubeadmCommands might not complete if *antrea installation* fails , because we install antrea in postKubeadmLogic!
+
+Thus its likely that Antrea is not installing properly in cases where you see ` node.cloudprovider.kubernetes.io/uninitialized` HOWEVEr, dont
+mistake this - its not because the cloudprovider cares about CNI, its just, because the node wont be properly rebooted (which is required to consume DNS cloud-init's DNS fixes) until ALL OF THE postKubeadm commands have finished!
+
+.... Next, we'll troubelshoot why antrea installation might fail in a windows cluster's postKubeadmCommand...
+
+## Troubleshooting Antrea installation
+
+The previous section mentions how a broken antrea installation can cause a starvation in completion of postKubeadmCommands.
+
+*QUESTION* If we avoid running antrea installation, is that enough to prevent `uninitialized` taints from occuring?  We'll explore this next ((( TODO ))) 
+
+
+
 
 
 
