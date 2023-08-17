@@ -2971,7 +2971,16 @@ mistake this - its not because the cloudprovider cares about CNI, its just, beca
 
 Before we troubleshoot, we must make our windows machinedeployment easier to handle.  CAPV will be (rightfully) recreating our nodes, b/c it will detect that
 our machines aren't healthy:
-
+so run `kubectl edit mhc ...` on your windows MHC, 
+```
+kubo@uOFLhGS9YBJ3y:~$ kubectl get mhc
+NAME                         CLUSTER           EXPECTEDMACHINES   MAXUNHEALTHY   CURRENTHEALTHY   AGE
+linux-cluster-6p4p9          linux-cluster     1                  100%           1                19d
+linux-cluster-md-0-btvw7     linux-cluster     1                  100%           1                19d
+windows-cluster-dt6bx        windows-cluster   1                  100%           1                12d
+windows-cluster-md-0-lmncw   windows-cluster   1                  100%                            12d <-- this is your windows node
+```
+And edit the YAML: 
 ```
 nodeStartupTimeout: 120m ### <-- important THIS is what will cause CAPI to otherwise, every 20 minutes rebuild your node!
 ...
