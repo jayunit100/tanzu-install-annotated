@@ -3031,7 +3031,7 @@ In the above we can clearly see:
 
 So next, we'll need to find out: What did antrea do, and, why did it stop?.... 
 
-## Lets look in the kubeadmConfig yaml
+## Go to kubeadmConfig yaml to understand antrea installation 
 
 So why is it that Antrea appears to be ready but ... its not running as a service?  TLDR because you **can trick containerd** by writing a file, and containerd 
 will then tell kubelet's that "yeah, my network is setup" 
