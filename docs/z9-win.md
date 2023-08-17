@@ -3022,6 +3022,9 @@ So next, we'll need to find out: What did antrea do, and, why did it stop?....
 
 ## Lets look in the kubeadmConfig yaml
 
+So why is it that Antrea appears to be ready but ... its not running as a service?  TLDR because you **can trick containerd** by writing a file, and containerd 
+will then tell kubelet's that "yeah, my network is setup" 
+
 Kubeadm is the thing that runs `postKubeadm` commands which script out the setup of antrea in TKG 1.x -> 2.3 (someday it'll be a hostprocess container, but for now , antrea on windows is an `nssm` service).  So  we can see in the `kubeadmConfig` for our windows cluster `kubectl edit kubeadmConfig  windows-cluster-md-0-bootstrap-m24kj-n8lwv`, that we have operations which run to setup the cni directories , configuring antrea as the CNI.
 ```
       Expand-Archive -Force -Path $antreaZipFile -DestinationPath C:\k\antrea
@@ -3029,5 +3032,21 @@ Kubeadm is the thing that runs `postKubeadm` commands which script out the setup
       cp C:\k\antrea\bin\host-local.exe C:\opt\cni\bin\host-local.exe -Force
       cp C:\k\antrea\etc\antrea-cni.conflist C:\etc\cni\net.d\10-antrea.conflist -Force
 ```
+Ultimately 
+- these existing files get checked by containerd
+- containerd then tells kubelet "yeah, im ready to run pods"
+- but pods dont actually run , b/c the node is still tainted as non-ready
+- the reason for THAT is that is that we "trick" containerd by writing a file in the installation of antrea, which exists **before** antrea agent runs
 
-But... Does the kubelet after the removal of 1.24 cni-conf-dir and cni-bin-dir, still check these for CNI readiness? 
+```
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    sandbox_image = "mcr.microsoft.com/oss/kubernetes/pause:3.6"
+    [plugins."io.containerd.grpc.v1.cri".cni]
+      bin_dir = "C:/opt/cni/bin"
+      conf_dir = "C:/etc/cni/net.d"
+And we do exactly that in our json patches for our kubeadmPostCommands :slightly_smiling_face:
+cp C:\k\antrea\etc\antrea-cni.conflist C:\etc\cni\net.d\10-antrea.conflist -Force
+```
+
+Ok.  So, 
