@@ -2973,6 +2973,8 @@ Before we troubleshoot, we must make our windows machinedeployment easier to han
 our machines aren't healthy:
 
 ```
+nodeStartupTimeout: 120m ### <-- important THIS is what will cause CAPI to otherwise, every 20 minutes rebuild your node!
+...
   unhealthyConditions:
   - status: Unknown
     timeout: 20m0s <-- make a long time before things are determined as unhealthy
