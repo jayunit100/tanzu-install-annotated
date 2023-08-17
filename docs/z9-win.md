@@ -3015,12 +3015,19 @@ Mode                LastWriteTime         Length Name
 ```
 
 In the above we can clearly see: 
-- C:\etc\cni\net.d\ is **indeed** written to . that means AT SOME POINT, antrea installation started.
+- C:\etc\cni\net.d\ is **indeed** written to . that means AT SOME POINT, someone wrote this file out...
 - It started **about 1 minute** after the kubelet itself, started
 
-So next, we'll need to find out: What did antrea do, and, why did it stop?.... (To be continued) 
+So next, we'll need to find out: What did antrea do, and, why did it stop?.... 
 
+## Lets look in the kubeadmConfig yaml
 
+Kubeadm is the thing that runs `postKubeadm` commands which script out the setup of antrea in TKG 1.x -> 2.3 (someday it'll be a hostprocess container, but for now , antrea on windows is an `nssm` service).  So  we can see in the `kubeadmConfig` for our windows cluster `kubectl edit kubeadmConfig  windows-cluster-md-0-bootstrap-m24kj-n8lwv`, that we have operations which run to setup the cni directories , configuring antrea as the CNI.
+```
+      Expand-Archive -Force -Path $antreaZipFile -DestinationPath C:\k\antrea
+      cp C:\k\antrea\bin\antrea-cni.exe C:\opt\cni\bin\antrea.exe -Force
+      cp C:\k\antrea\bin\host-local.exe C:\opt\cni\bin\host-local.exe -Force
+      cp C:\k\antrea\etc\antrea-cni.conflist C:\etc\cni\net.d\10-antrea.conflist -Force
+```
 
-
-
+But... Does the kubelet after the removal of 1.24 cni-conf-dir and cni-bin-dir, still check these for CNI readiness? 
