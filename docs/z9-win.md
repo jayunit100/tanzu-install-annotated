@@ -3060,4 +3060,8 @@ And we do exactly that in our json patches for our kubeadmPostCommands :slightly
 cp C:\k\antrea\etc\antrea-cni.conflist C:\etc\cni\net.d\10-antrea.conflist -Force
 ```
 
-Ok.  So, 
+Ok.  So, the conclusion for this cluster is
+- Antrea installation never happened
+- Our kubelet has a false sense of readiness
+
+Next step, you'll need to figure out why Antrea Agent was never started, and Antrea service wasnt installed...... 
