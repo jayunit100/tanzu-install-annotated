@@ -2967,8 +2967,10 @@ Thus its likely that Antrea is not installing properly in cases where you see ` 
 mistake this - its not because the cloudprovider cares about CNI, its just, because the node wont be properly rebooted (which is required to consume DNS cloud-init's DNS fixes) until ALL OF THE postKubeadm commands have finished!
 
 .... Next, we'll troubelshoot why antrea installation might fail in a windows cluster's postKubeadmCommand...
-## Troubleshooting: First Make MHC Easier to deal with 
 
+## MHC and nodeStartupTimeout 
+
+This is relevant on windows bc the startup is less predictable.
 Before we troubleshoot, we must make our windows machinedeployment easier to handle.  CAPV will be (rightfully) recreating our nodes, b/c it will detect that
 our machines aren't healthy:
 so run `kubectl edit mhc ...` on your windows MHC, 
@@ -2980,7 +2982,17 @@ linux-cluster-md-0-btvw7     linux-cluster     1                  100%          
 windows-cluster-dt6bx        windows-cluster   1                  100%           1                12d
 windows-cluster-md-0-lmncw   windows-cluster   1                  100%                            12d <-- this is your windows node
 ```
-And edit the YAML: 
+And edit the YAML:  
+
+- You should know here that `Node startup` is defined as "the moment that a kubernetes node has a providerID".
+- thus `nodeStartupTimeout` really is should be called to `providerIDWaitTimeout` :) 
+That is:
+
+1. node..providerID is set
+2. CAPI can match a Machine to a Node and sets Machine.status.nodeRef
+3. MHC controller can see that the Node for a Machine exists
+According to Stefan Büringer: "if 2 & 3 don't happen the Machine is remediated after nodeStartupTimeout"
+
 ```
 nodeStartupTimeout: 120m ### <-- important THIS is what will cause CAPI to otherwise, every 20 minutes rebuild your node!
 ...
@@ -3036,18 +3048,73 @@ So next, we'll need to find out: What did antrea do, and, why did it stop?....
 So why is it that Antrea appears to be ready but ... its not running as a service?  TLDR because you **can trick containerd** by writing a file, and containerd 
 will then tell kubelet's that "yeah, my network is setup" 
 
-Kubeadm is the thing that runs `postKubeadm` commands which script out the setup of antrea in TKG 1.x -> 2.3 (someday it'll be a hostprocess container, but for now , antrea on windows is an `nssm` service).  So  we can see in the `kubeadmConfig` for our windows cluster `kubectl edit kubeadmConfig  windows-cluster-md-0-bootstrap-m24kj-n8lwv`, that we have operations which run to setup the cni directories , configuring antrea as the CNI.
+Well, lets **annotate** the powershell installer for TKGs Windows nodes, which runs as a `postKubeadmCommand`:
+
+- First thing we do is falsely mark the kubelet as ready. If anything this should happen at the end or as late in the flow as possible !!!! otherwise, CNI installation failures wont be flagged by Containerd, and thus, by the kubelet ........
+
+note *SQUEED* has suggested that we move away from monitoring folders like `etc/cni/net.d`, and instead, use https://hackmd.io/@squeed/cri-cni#Defaulting-and-initialization, that is something like:
 ```
-      Expand-Archive -Force -Path $antreaZipFile -DestinationPath C:\k\antrea
-      cp C:\k\antrea\bin\antrea-cni.exe C:\opt\cni\bin\antrea.exe -Force
-      cp C:\k\antrea\bin\host-local.exe C:\opt\cni\bin\host-local.exe -Force
-      cp C:\k\antrea\etc\antrea-cni.conflist C:\etc\cni\net.d\10-antrea.conflist -Force
+message NetworkStatus {
+    // if true, the network is ready to handle
+    // sandbox creation and deletion requests
+    bool sandbox_management = 1;
+    
+    // if true, existing sandboxes have connectivity
+    bool connectivity = 2;
+}
 ```
-Ultimately 
-- these existing files get checked by containerd
-- containerd then tells kubelet "yeah, im ready to run pods"
-- but pods dont actually run , b/c the node is still tainted as non-ready
-- the reason for THAT is that is that we "trick" containerd by writing a file in the installation of antrea, which exists **before** antrea agent runs
+
+If you had an explicit networkStatus object, then the creation of the `C:/etc/cni/net.d` directory would be
+an implementation detail, not a semaphore ...
+
+
+```
+2196 Expand-Archive -Force -Path $antreaZipFile -DestinationPath C:\k\antrea
+2197 cp C:\k\antrea\bin\antrea-cni.exe C:\opt\cni\bin\antrea.exe -Force
+2198 cp C:\k\antrea\bin\host-local.exe C:\opt\cni\bin\host-local.exe -Force
+
+### This set's up antrea so that its the default CNI called by containerd
+2199 cp C:\k\antrea\etc\antrea-cni.conflist C:\etc\cni\net.d\10-antrea.conflist -Force #####. <-------- makes the kubelet think CNI is installed
+2200
+...
+2219 ### If this fails, then the kubeAPIServerOverride will never happen
+2220 ### And then, antrea-agent will never start
+2221 # Wait for antrea-agent token to be ready, the token will be used by Install-AntreaAgent
+2222 $AntreaAgentToken = (WaitForSaToken $KubeConfigFile 'antrea-agent') ###### <-------- now we might fail here
+...
+
+####### This line never reached
+####### Parse kube-apiserver address, and use it as the value of "kubeAPIServerOverride" in antrea-agent.conf
+
+2226 $KubeAPIServer = $(kubectl --kubeconfig=$KubeConfigFile config view -o jsonpath='{.clusters[0].cluster.server}') ### <---- THIS never happens
+2227 $find = "#kubeAPIServerOverride: `"`""
+2228 $replace = "kubeAPIServerOverride: `"$KubeAPIServer`""
+2229 $antreaConfigFile = "C:\k\antrea\etc\antrea-agent.conf"
+2230 (Get-Content $antreaConfigFile) -replace $find, $replace | Out-File -encoding ASCII $antreaConfigFile
+2231
+######################################
+# RESULT is that this never happens #
+######################################
+2232 # Install antrea-agent & OVS
+2233 Import-Module C:\k\antrea\helper.psm1
+2234 & Install-AntreaAgent -KubernetesHome "C:\k" -KubeConfig "C:\etc\kubernetes\kubelet.conf" -AntreaHome "C:\k\antrea" -AntreaVersion "1.11.1"
+2235 & C:\k\antrea\Install-OVS.ps1 -ImportCertificate $false -LocalFile C:\k\antrea\ovs-win64.zip
+2236
+2237 # Setup Services
+2238 $nssm = (Get-Command nssm).Source
+2239 & $nssm set kubelet start SERVICE_AUTO_START
+2240 & $nssm install antrea-agent "C:\k\antrea\bin\antrea-agent.exe" "--config=C:\k\antrea\etc\antrea-agent.conf --logtostderr=false --log_dir=C:\var\log\antrea --alsologtostderr --log_file_max_size=100 --log_file_max_num=4"
+2241 & $nssm set antrea-agent DependOnService ovs-vswitchd
+2242 & $nssm set antrea-agent Start SERVICE_AUTO_START
+2243
+2244 # Start Services
+2245 start-service kubelet
+2246 start-service antrea-agent
+2247 - op: add
+
+
+```
+
 
 ```
 [plugins]
@@ -3065,3 +3132,5 @@ Ok.  So, the conclusion for this cluster is
 - Our kubelet has a false sense of readiness
 
 Next step, you'll need to figure out why Antrea Agent was never started, and Antrea service wasnt installed...... 
+
+
