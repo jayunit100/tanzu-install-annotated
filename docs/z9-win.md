@@ -2967,13 +2967,58 @@ Thus its likely that Antrea is not installing properly in cases where you see ` 
 mistake this - its not because the cloudprovider cares about CNI, its just, because the node wont be properly rebooted (which is required to consume DNS cloud-init's DNS fixes) until ALL OF THE postKubeadm commands have finished!
 
 .... Next, we'll troubelshoot why antrea installation might fail in a windows cluster's postKubeadmCommand...
+## Troubleshooting: First Make MHC Easier to deal with 
 
-## Troubleshooting Antrea installation
+Before we troubleshoot, we must make our windows machinedeployment easier to handle.  CAPV will be (rightfully) recreating our nodes, b/c it will detect that
+our machines aren't healthy:
 
-The previous section mentions how a broken antrea installation can cause a starvation in completion of postKubeadmCommands.
+```
+  unhealthyConditions:
+  - status: Unknown
+    timeout: 20m0s <-- make a long time before things are determined as unhealthy
+    type: Ready
+  - status: "False"
+    timeout: 60m0s <-- make a large timeout
+    type: Ready
+```
 
-*QUESTION* If we avoid running antrea installation, is that enough to prevent `uninitialized` taints from occuring?  We'll explore this next ((( TODO ))) 
+This means we'll have an hour or so to debug these nodes before they get recreated... 
 
+## Troubleshooting: Wheres the Antrea installation?
+
+A simple way to start looking for the antrea CNI on our windows nodes is to run 
+```
+PS C:\Users\capv> Get-ChildItem -Path C:\ -Recurse -File -ErrorAction SilentlyContinue | Select-String -Pattern "antreA"
+
+C:\etc\cni\net.d\10-antrea.conflist:3:    "name": "antrea",
+C:\etc\cni\net.d\10-antrea.conflist:6:            "type": "antrea",
+C:\k\antrea_cleanup.ps1:1:stop-service antrea-agent -ErrorAction SilentlyContinue
+C:\k\antrea_cleanup.ps1:2:C:\k\antrea\Clean-AntreaNetwork.ps1
+C:\k\register_antrea_cleanup.ps1:1:$methodScript = "C:\k\antrea\Clean-AntreaNetwork.ps1"
+C:\k\register_antrea_cleanup.ps1:3:    $cleanScriptPath = "C:\k\antrea_cleanup.ps1"
+```
+We can then check to see when these files were made:
+```
+PS C:\Users\capv> ls C:\etc\cni\
+    Directory: C:\etc\cni
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----        8/16/2023  10:46 PM                net.d
+```
+And there is a `/var/log/kubelet`...
+```
+PS C:\Users\capv> ls C:\var\log\kubelet\kubelet.log
+    Directory: C:\var\log\kubelet
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----        8/16/2023  10:45 PM              0 kubelet.log
+```
+
+In the above we can clearly see: 
+- C:\etc\cni\net.d\ is **indeed** written to . that means AT SOME POINT, antrea installation started.
+- It started **about 1 minute** after the kubelet itself, started
+
+So next, we'll need to find out: What did antrea do, and, why did it stop?.... (To be continued) 
 
 
 
