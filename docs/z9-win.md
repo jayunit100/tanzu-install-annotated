@@ -2968,6 +2968,21 @@ mistake this - its not because the cloudprovider cares about CNI, its just, beca
 
 .... Next, we'll troubelshoot why antrea installation might fail in a windows cluster's postKubeadmCommand...
 
+We're going to look at MHCs and how to make them more forgiving, as a hack to let us keep the node on for longer...
+
+But before we do that, you should know here that `Node startup` is defined as "the moment that a kubernetes node has a providerID".
+- thus `nodeStartupTimeout` really is should be called to `providerIDWaitTimeout` :)
+- The CPI is what adds the providerid + internal IP + external ip to a node
+- And  removes taint node.cloudprovider.kubernetes.io/uninitialized from the node
+THUS
+- our DNS name wont get fixed until cloudbase completes and reboots the node
+- if cloudbase-init cant complete
+- DNS name wont be correct
+- and thus the cloud-controller-manager wont set the `providerId` on a node
+- and the unset providerID on the node will result in CAPI reprovisioning the machine
+Meaning, its harder for us to debug where the cloudbase-init (root cause of all this) is failing, to begin with, bc the machine
+will keep dissapearing. 
+
 ## MHC and nodeStartupTimeout 
 
 This is relevant on windows bc the startup is less predictable.
@@ -2984,8 +2999,7 @@ windows-cluster-md-0-lmncw   windows-cluster   1                  100%          
 ```
 And edit the YAML:  
 
-- You should know here that `Node startup` is defined as "the moment that a kubernetes node has a providerID".
-- thus `nodeStartupTimeout` really is should be called to `providerIDWaitTimeout` :) 
+  
 That is:
 
 1. node..providerID is set
