@@ -3148,3 +3148,41 @@ Ok.  So, the conclusion for this cluster is
 Next step, you'll need to figure out why Antrea Agent was never started, and Antrea service wasnt installed...... 
 
 
+## So can we catch the "Antrea Installation failure" ? 
+
+Well, maybe we can try.  Lets make an audit log and see if anything is failing: 
+
+```
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: RequestResponse
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # "name" is the name of the ClusterRole
+  name: superuser ### <<--- dont do this in production ! its god powers to watch literally anythign
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: superuser-binding #### <--- dont do this in production either, audit powers that give anyone access to any resource
+subjects:
+- kind: Group
+  name: "system:authenticated" # this is the group of all authenticated users
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: superuser
+  apiGroup: rbac.authorization.k8s.io
+```
+
+After making this blob of YAML we will:
+- See if there are any apiserver calls that are failing
+- Likely fix APIServer calls that are failing bc of the ClusterRoleBinding for ANYONE who is `system:authenticated`.
+
+now lets create the YAML and see what happens.
