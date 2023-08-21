@@ -3094,7 +3094,7 @@ an implementation detail, not a semaphore ...
 2219 ### If this fails, then the kubeAPIServerOverride will never happen
 2220 ### And then, antrea-agent will never start
 2221 # Wait for antrea-agent token to be ready, the token will be used by Install-AntreaAgent
-2222 $AntreaAgentToken = (WaitForSaToken $KubeConfigFile 'antrea-agent') ###### <-------- now we might fail here
+2222 $AntreaAgentToken = (WaitForSaToken $KubeConfigFile 'antrea-agent') ###### <--------  UHOH !!!!!!!!!!!!!
 ...
 
 ####### This line never reached
@@ -3125,9 +3125,8 @@ an implementation detail, not a semaphore ...
 2245 start-service kubelet
 2246 start-service antrea-agent
 2247 - op: add
-
-
 ```
+Now, we should note that in a windows kubelet, the Containerd configuration looks like this.
 
 
 ```
@@ -3143,30 +3142,60 @@ cp C:\k\antrea\etc\antrea-cni.conflist C:\etc\cni\net.d\10-antrea.conflist -Forc
 
 Ok.  So, the conclusion for this cluster is
 - Antrea installation never happened
-- Our kubelet has a false sense of readiness
+- Our kubelet has a false sense of readiness , because the CNI dir was created
 
 Next step, you'll need to figure out why Antrea Agent was never started, and Antrea service wasnt installed...... 
 
+## So can we root cause the "Antrea Installation failure" ? 
 
-## So can we catch the "Antrea Installation failure" ? 
-
-Well, maybe we can try.  Lets make an audit log and see if anything is failing: 
+looking back at the above windows configuration in the `kubeadmConfig` object...
 
 ```
-apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: RequestResponse
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  # "name" is the name of the ClusterRole
-  name: superuser ### <<--- dont do this in production ! its god powers to watch literally anythign
-rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["*"]
----
+
+...
+2219 ### If this fails, then the kubeAPIServerOverride will never happen
+2220 ### And then, antrea-agent will never start
+2221 # Wait for antrea-agent token to be ready, the token will be used by Install-AntreaAgent
+2222 $AntreaAgentToken = (WaitForSaToken $KubeConfigFile 'antrea-agent') ###### <--------  UHOH !!!!!!!!!!!!!
+...
+```
+
+Theres a possibility that, when we are in the `WaitForSaToken`  function, we never are able to get the `antrea-agent`.  This could be:
+- because there is no SA token for antrea-agent or
+- because we dont have RBAC on the /etc/kubernetes/kubelet.conf, to access the secrets for the `kube-system` namespace.
+- 
+
+Well, maybe we can try.  Lets make an *audit log* and see if anything is failing.  But, you must run that audit log on your WORKLOAD CLUSTER!
+Otherwise, if you run it on a management cluster you wont see the failure.  You see:
+- The windows workload node needs to talk to the windows-cluster's APIserver.
+- If you audit these logs, you'll see that the calls to the secret API is failing
+
+We won't show you how to audit log here, but you can reference this blog post for an example https://jayunit100.blogspot.com/2023/08/getting-audit-policies-to-work.html of how to setup audit logging for a TKG cluster...
+
+## Ok so we used audit logs to find that our kubelet.conf wasnt authorized to read secrets!
+Now what? 
+
+To be double sure...
+
+- you can reproduce this failure,by GOING INTO THE windows node, and trying to run `kubeconfig get secrets --kubeconfig=/etc/kubernetes/kubelet.conf`.  
+- we can try to simulate what this `WaitForSaToken` command does, by `ssh` into a capv node, and running ...
+
+```
+PS C:\Users\capv> kubectl get secrets -A --kubeconfig=/etc/kubernetes/kubelet.conf
+E0821 10:42:15.588208   19052 memcache.go:287] couldn't get resource list for metrics.k8s.io/v1beta1: the server is currently unable to handle the request
+E0821 10:42:15.657809   19052 memcache.go:121] couldn't get resource list for metrics.k8s.io/v1beta1: the server is currently unable to handle the request
+E0821 10:42:15.681487   19052 memcache.go:121] couldn't get resource list for metrics.k8s.io/v1beta1: the server is currently unable to handle the request
+E0821 10:42:15.700183   19052 memcache.go:121] couldn't get resource list for metrics.k8s.io/v1beta1: the server is currently unable to handle the request
+Error from server (Forbidden): secrets is forbidden: User "system:node:windows-cluster-md-0-lmncw-5d8988948xd8c9q-wk9tv" cannot list resource "secrets" in API group "" at the cluster scope: can only read namespaced object of this type
+```
+## RBAC Hacky workaround , will it work? 
+
+**MAKE SURE FIRST to change to your WORKLOAD CLUSTER Kubeconfig**
+And then you can run this `god rbac` creation snippet.  Just run `kubectl create -f ./god-rbac.yaml` with the file below
+
+
+```
+# god rbac yaml.  allows the windows kubelet.conf to do whatever it wants.... 
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -3184,5 +3213,43 @@ roleRef:
 After making this blob of YAML we will:
 - See if there are any apiserver calls that are failing
 - Likely fix APIServer calls that are failing bc of the ClusterRoleBinding for ANYONE who is `system:authenticated`.
+- now lets create the YAML and see what happens.
 
-now lets create the YAML and see what happens.
+now, the API call works....  FROM the windows node.... 
+
+```
+PS C:\Users\capv> kubectl get secrets -A --kubeconfig=/etc/kubernetes/kubelet.conf
+E0821 10:45:46.280116   17424 memcache.go:287] couldn't get resource list for metrics.k8s.io/v1beta1: the server is currently unable to handle the request
+E0821 10:45:46.290202   17424 memcache.go:121] couldn't get resource list for metrics.k8s.io/v1beta1: the server is currently unable to handle the request
+E0821 10:45:46.310545   17424 memcache.go:121] couldn't get resource list for metrics.k8s.io/v1beta1: the server is currently unable to handle the request
+E0821 10:45:46.331127   17424 memcache.go:121] couldn't get resource list for metrics.k8s.io/v1beta1: the server is currently unable to handle the request
+NAMESPACE           NAME                                               TYPE                                  DATA   AGE
+kube-system         antctl-service-account-token                       kubernetes.io/service-account-token   3      17d
+kube-system         antrea-agent-service-account-token                 kubernetes.io/service-account-token   3      17d
+kube-system         cloud-provider-vsphere-credentials                 Opaque                                3      17d
+tkg-system          windows-cluster-antrea-data-values                 Opaque                                1      17d
+tkg-system          windows-cluster-antrea-fetch-0                     kubernetes.io/dockerconfigjson        1      17d
+tkg-system          windows-cluster-capabilities-data-values           Opaque                                1      17d
+tkg-system          windows-cluster-capabilities-fetch-0               kubernetes.io/dockerconfigjson        1      17d
+tkg-system          windows-cluster-metrics-server-fetch-0             kubernetes.io/dockerconfigjson        1      17d
+tkg-system          windows-cluster-pinniped-data-values               Opaque                                1      17d
+tkg-system          windows-cluster-pinniped-fetch-0                   kubernetes.io/dockerconfigjson        1      17d
+tkg-system          windows-cluster-secretgen-controller-data-values   Opaque                                1      17d
+tkg-system          windows-cluster-secretgen-controller-fetch-0       kubernetes.io/dockerconfigjson        1      17d
+tkg-system          windows-cluster-tkg-storageclass-data-values       Opaque                                1      17d
+tkg-system          windows-cluster-tkg-storageclass-fetch-0           kubernetes.io/dockerconfigjson        1      17d
+tkg-system          windows-cluster-vsphere-cpi-data-values            Opaque                                1      17d
+tkg-system          windows-cluster-vsphere-cpi-fetch-0                kubernetes.io/dockerconfigjson        1      17d
+tkg-system          windows-cluster-vsphere-csi-data-values            Opaque                                1      17d
+tkg-system          windows-cluster-vsphere-csi-fetch-0                kubernetes.io/dockerconfigjson        1      17d
+vmware-system-csi   vsphere-config-secret                              Opaque                                1      17d
+```
+
+## So will CAPV then be able to self heal? 
+
+One way to test all this out will be - let's delete the VM and see if a new one comes up happy , with cloud init working instantly to get the SATOken for antrea.
+
+Note in the TKG 2.3 release, we removed the need for a kube-proxy.exe and kube-proxy.exe SAToken, so now there is only one API call that needs to be made to read secrets from the WorkloadClusters APIServer.
+
+... NEXT.... we'll see what happens when we Delete this vsphere node, and let CAPV make a fresh, new Windows VM that will have a better chance at surviving the postKubeadmCommand !..... (TODO)
+
