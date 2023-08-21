@@ -3269,3 +3269,5 @@ I0821 18:20:59.248569       1 nodemanager.go:351] Hostname: windows-cluster-md-0
 I0821 18:20:59.283210       1 node_controller.go:484] Successfully initialized node windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg with cloud provider
 I0821 18:20:59.284421       1 event.go:294] "Event occurred" object="windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg" fieldPath="" kind="Node" apiVersion="v1" type="Normal" reason="Synced" message="Node synced successfully"
 ```
+
+Yes !!!! We got our windows node, up and running !!!!!!
