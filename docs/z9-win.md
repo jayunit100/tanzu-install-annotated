@@ -3271,3 +3271,112 @@ I0821 18:20:59.284421       1 event.go:294] "Event occurred" object="windows-clu
 ```
 
 Yes !!!! We got our windows node, up and running !!!!!!
+
+## A happy windows node... looks like this!
+
+Now we can look at our happy windows node, with no "uninitialized/ dont schedule here" taints !
+```
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    alpha.kubernetes.io/provided-node-ip: 10.221.159.239
+    cluster.x-k8s.io/cluster-name: windows-cluster
+    cluster.x-k8s.io/cluster-namespace: default
+    cluster.x-k8s.io/labels-from-machine: node.cluster.x-k8s.io/esxi-host
+    cluster.x-k8s.io/machine: windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg
+    cluster.x-k8s.io/owner-kind: MachineSet
+    cluster.x-k8s.io/owner-name: windows-cluster-md-0-lmncw-5d8988948xd8c9q
+    kubeadm.alpha.kubernetes.io/cri-socket: npipe:////./pipe/containerd-containerd
+    node.alpha.kubernetes.io/ttl: "0"
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2023-08-21T18:14:56Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/instance-type: vsphere-vm.cpu-2.mem-4gb.os-win10server
+    beta.kubernetes.io/os: windows
+    image-type: ova
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg
+    kubernetes.io/os: windows
+    node.cluster.x-k8s.io/esxi-host: w4-hs3-i0303.eng.vmware.com
+    node.kubernetes.io/instance-type: vsphere-vm.cpu-2.mem-4gb.os-win10server
+    node.kubernetes.io/windows-build: 10.0.17763
+    os-name: windows
+    os-type: windows
+    run.tanzu.vmware.com/os-image: v1.26.5---vmware.1-tkg.1-windows
+  name: windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg
+  resourceVersion: "3709770"
+  uid: 267265ad-6584-4048-be6f-55c3e5ba9710
+spec:
+  podCIDR: 100.99.230.0/24
+  podCIDRs:
+  - 100.99.230.0/24
+  providerID: vsphere://42142ecb-70a1-c75a-d4f0-9a16fd67a2e4
+  taints:
+  - effect: NoSchedule
+    key: os
+    value: windows
+status:
+  addresses:
+  - address: 10.221.159.239
+    type: InternalIP
+  - address: 10.221.159.239
+    type: ExternalIP
+  - address: windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg
+    type: Hostname
+  allocatable:
+    cpu: "2"
+    ephemeral-storage: "38322513038"
+    memory: 4091380Ki
+    pods: "110"
+  capacity:
+    cpu: "2"
+    ephemeral-storage: 41582588Ki
+    memory: 4193780Ki
+    pods: "110"
+  conditions:
+  - lastHeartbeatTime: "2023-08-21T18:21:23Z"
+    lastTransitionTime: "2023-08-21T18:14:55Z"
+    message: kubelet has sufficient memory available
+    reason: KubeletHasSufficientMemory
+    status: "False"
+    type: MemoryPressure
+  - lastHeartbeatTime: "2023-08-21T18:21:23Z"
+    lastTransitionTime: "2023-08-21T18:14:55Z"
+    message: kubelet has no disk pressure
+    reason: KubeletHasNoDiskPressure
+    status: "False"
+    type: DiskPressure
+  - lastHeartbeatTime: "2023-08-21T18:21:23Z"
+    lastTransitionTime: "2023-08-21T18:14:55Z"
+    message: kubelet has sufficient PID available
+    reason: KubeletHasSufficientPID
+    status: "False"
+    type: PIDPressure
+  - lastHeartbeatTime: "2023-08-21T18:21:23Z"
+    lastTransitionTime: "2023-08-21T18:15:11Z"
+    message: kubelet is posting ready status
+    reason: KubeletReady
+  daemonEndpoints:
+    kubeletEndpoint:
+      Port: 10250
+  images:
+  - names:
+    - mcr.microsoft.com/oss/kubernetes/pause@sha256:b4b669f27933146227c9180398f99d8b3100637e4a0a1ccf804f8b12f4b9b8df
+    - mcr.microsoft.com/oss/kubernetes/pause:3.6
+    sizeBytes: 104164397
+  nodeInfo:
+    architecture: amd64
+    bootID: "10"
+    containerRuntimeVersion: containerd://1.6.18-1-gdbc99e5b1
+    kernelVersion: 10.0.17763.4645
+    kubeProxyVersion: v1.26.5+vmware.2
+    kubeletVersion: v1.26.5+vmware.2
+    machineID: windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg
+    operatingSystem: windows
+    osImage: Windows Server 2019 Standard
+    systemUUID: CB2E1442-A170-5AC7-D4F0-9A16FD67A2E4
+```
+
+ Yay!
