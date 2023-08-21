@@ -3253,3 +3253,13 @@ Note in the TKG 2.3 release, we removed the need for a kube-proxy.exe and kube-p
 
 ... NEXT.... we'll see what happens when we Delete this vsphere node, and let CAPV make a fresh, new Windows VM that will have a better chance at surviving the postKubeadmCommand !..... (TODO)
 
+## Monitoring cloud controller manager logs
+
+We can start by Looking in cloud contorller manager logs as the node comes up.  Ultimately its the CCM's job to get the node's ID and then set a providerID for it... This providerID is then the key that unlocks cluster API to say "yes, this node is ready to use".... At the start, it turns out that cloud controller manager isnt able to find the corresponding VM...
+```
+I0821 18:16:47.098355       1 search.go:186] Did not find node windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg in vc=10.89.160.37 and datacenter=Workload 3
+E0821 18:16:47.099503       1 node_controller.go:229] error syncing 'windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg': failed to get provider ID for node windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg at cloudprovider: failed to get instance ID from cloud provider: No VM found, requeuing
+...
+```
+we'll wait a few minutes...
+(TODO)
