@@ -3431,6 +3431,15 @@ the SAToken that was explored above, and:
 - You can disbable the antrea-proxy after you create a cluster.
 However, since **antrea-proxy** runs as a process, you cannot do `kubectl edit antreaconfig...` as you would in a normal cluster. Rather you will need to edit the `C:/k/antrea/etc` configuration file, to disable antrea proxying in the agent.  then You will restart the antrea-agent service.
 
+Run these commands to install VIM on your windows server instance after ssh'ing into it....
+
+```
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+
+choco install vim
+```
+
+
 5) If Antrea uses OVS, are there still HNSEndpoints for the local pods (note: we dont expect HNSEndpoints for remote pods,... kube-proxies normally make THOSE endpoints) ?
 
 Yes!  As you can see below!
@@ -3489,16 +3498,9 @@ VirtualNetwork            : 0DCBDE4A-EAD8-4FEE-BEFE-08949F9E5D18
 VirtualNetworkName        : antrea-hnsnetwork
 ```
 
-
-
-
 6) How can I learn more about windows networking?
 
 Check out our sister site, https://windowsnetworking.readthedocs.io/en/latest/ by Daman and Jay !!!
-
-
-
-
 
 
 
