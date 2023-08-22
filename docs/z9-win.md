@@ -3439,6 +3439,57 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 choco install vim
 ```
 
+Then edit the C:/antrea/etc/antrea-agent.conf file to turn `AntreaProxy: false`.  
+
+Now: we can `Stop-Service *ant*` and then `Start-Service *ant*` and we'll see in the new logs that antreaProxy is NOT enabled.
+
+```
+PS C:\Users\capv> Start-Service *ant*
+PS C:\Users\capv> ls C:\var\log\antrea\
+
+
+    Directory: C:\var\log\antrea
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a---l        8/22/2023   5:19 AM              0 antrea-agent.exe.INFO
+-a---l        8/22/2023   5:19 AM              0 antrea-agent.exe.WARNING
+-a----        8/22/2023   5:20 AM           1715 antrea-agent.exe.windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg.WORKGROUP_WINDOWS-CLUSTER$.log.INFO.20230822-051955.3292
+-a----        8/22/2023   5:20 AM            603 antrea-agent.exe.windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg.WORKGROUP_WINDOWS-CLUSTER$.log.WARNING.20230822-051955.3292
+
+
+PS C:\Users\capv> cat C:\var\log\antrea\antrea-agent.exe.windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg.WORKGROUP_WINDOWS-CLUSTER$.log.INFO.20230822-051955.3292
+Log file created at: 2023/08/22 05:19:55
+Running on machine: windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg
+Binary: Built with gc go1.19.4 for windows/amd64
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I0822 05:19:55.647000    3292 log_file.go:93] Set log file max size to 104857600
+W0822 05:19:55.647000    3292 options_windows.go:64] AntreaProxy is not enabled. NetworkPolicies might not be enforced correctly for Service traffic!
+I0822 05:19:55.647000    3292 agent.go:98] Starting Antrea agent (version v1.11.1-4776f66.dirty)
+W0822 05:19:55.656575    3292 env.go:88] Environment variable POD_NAMESPACE not found
+W0822 05:19:55.656575    3292 env.go:126] Failed to get Pod Namespace from environment. Using "kube-system" as the Antrea Service Namespace
+I0822 05:19:55.656575    3292 prometheus.go:171] Initializing prometheus metrics
+I0822 05:19:55.656575    3292 ovs_client.go:71] Connecting to OVSDB at address \\.\pipe\C:openvswitchvarrunopenvswitchdb.sock
+I0822 05:19:55.666637    3292 agent.go:403] Setting up node network
+I0822 05:19:55.666637    3292 env.go:56] Environment variable NODE_NAME not found, using hostname instead
+I0822 05:19:55.706228    3292 agent.go:1020] "Got Interface MTU" MTU=1450
+I0822 05:19:56.507770    3292 net_windows.go:511] Receive Segment Coalescing (RSC) for vSwitch antrea-hnsnetwork is already enabled
+I0822 05:19:56.508390    3292 ovs_client.go:114] Bridge exists: 27687748-7c7d-42de-b519-92f78ac4ce46
+I0822 05:19:56.568404    3292 agent_windows.go:230] OVS bridge local port br-int already exists, skip the configuration
+I0822 05:19:56.568945    3292 agent_windows.go:246] "Uplink already exists, skip the configuration" uplink="Ethernet0" port=3
+I0822 05:20:06.528875    3292 net_windows.go:705] "existing netnat in CIDR" name=<
+
+        100.99.230.0/24
+
+
+ > subnetCIDR="100.99.230.0/24"
+I0822 05:20:07.904021    3292 route_windows.go:235] "Added virtual Service IP route" route="LinkIndex: 16, DestinationSubnet: 169.254.0.253/32, GatewayAddress: 0.0.0.0, RouteMetric: 50"
+I0822 05:20:09.195483    3292 route_windows.go:248] "Added virtual Service IP neighbor" neighbor="LinkIndex: 16, IPAddress: 169.254.0.253, LinkLayerAddress: aa:bb:cc:dd:ee:ff"
+```
+
+
+
 
 5) If Antrea uses OVS, are there still HNSEndpoints for the local pods (note: we dont expect HNSEndpoints for remote pods,... kube-proxies normally make THOSE endpoints) ?
 
@@ -3501,7 +3552,6 @@ VirtualNetworkName        : antrea-hnsnetwork
 6) How can I learn more about windows networking?
 
 Check out our sister site, https://windowsnetworking.readthedocs.io/en/latest/ by Daman and Jay !!!
-
 
 
 
