@@ -3380,3 +3380,129 @@ status:
 ```
 
  Yay!
+
+
+## Administering a Windows cluster
+
+0) What's the networking model?
+
+TKG Cluster by default use **antrea** as their CNI and **antreaProxy** as their kube proxy implementations.  As of TKG 2.3, we no longer run the kube-proxy.exe for windows.  https://antrea.io/docs/main/docs/antrea-proxy/.
+
+1) How to ssh into nodes?
+
+Like all TKG clusters, you can run `kubectl get nodes -o wide` and run `ssh capv@...` to get into your node.
+
+2) What processes run on the host?
+
+A standard Windows node looks (sometthing like) this... (there are many other processes like svchost and so on
+which ive removed for readability)
+```
+S C:\Users\capv> Get-Process
+
+Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+-------  ------    -----      -----     ------     --  -- -----------
+173       8     2044       7388       0.94   1612   0 ovsdb-server
+7088      11    12032      19340      52.30   2216   0 ovs-vswitchd
+296      20    38652      50844     274.98   2704   0 antrea-agent <--- CNI !!!!
+303      22    38488      46280     435.39   1700   0 containerd
+193      12    21372      16800       6.70   3144   0 containerd-shim-runhcs-v1
+0      16     2380     104296       0.39     88   0 Registry
+80       6      928       4572       0.02   2464   3 ServiceMonitor
+439      10     3640       8180       0.39    624   0 services
+...
+160       9     1532       5516       0.19   2680   2 services
+53       3      492       1152       0.13    280   0 smss
+48       3      484       1172       0.03   2616   0 smss
+123      12     1528       7088       0.05   1836   0 sshd
+136       9     2136       7440       0.02   4052   0 sshd
+130       9     2056       7620       0.03   5616   0 sshd
+```
+
+3) How does `antrea-agent` on windows run?
+
+In TKG , we use `nssm` to install antrea-agent as a program that runs locally (antrea-agent.exe).  It uses
+the SAToken that was explored above, and:
+- It creates IPs for pods, like normal CNIs.
+- It also creates OVS routes for services->pods.
+- Antrea agent DOES NOT use HNS, instead it uses OVS on windows ! So you wont see HNS rules being written for proxied rules
+
+4) Can I disable **AntreaProxy** ? Yes ! There are two ways to do this.
+- You can disable the antrea-proxy when you create a new cluster.
+- You can disbable the antrea-proxy after you create a cluster.
+However, since **antrea-proxy** runs as a process, you cannot do `kubectl edit antreaconfig...` as you would in a normal cluster. Rather you will need to edit the `C:/k/antrea/etc` configuration file, to disable antrea proxying in the agent.  then You will restart the antrea-agent service.
+
+5) If Antrea uses OVS, are there still HNSEndpoints for the local pods (note: we dont expect HNSEndpoints for remote pods,... kube-proxies normally make THOSE endpoints) ?
+
+Yes!  As you can see below!
+```
+NAMESPACE              NAME                                                     READY   STATUS      RESTARTS      AGE     IP               NODE                                               NOMINATED NODE   READINESS GATES
+default                nginx-deployment-9f7c4f4f-5hncz                          0/1     Pending     0             16d     <none>           <none>                                             <none>           <none>
+default                windows-server-iis-5b4d5c94bd-5dzbm                      1/1     Running     0             16h     100.99.230.2     windows-cluster-md-0-lmncw-5d8988948xd8c9q-hjzmg   <none>           <none>
+kube-system            antrea-agent-5x9wb                                       2/2     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            antrea-controller-79d6cc869-4qw5x                        1/1     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            coredns-5656df985f-dxffg                                 1/1     Running     0             17d     100.96.0.4       windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            coredns-5656df985f-kg9cn                                 1/1     Running     0             17d     100.96.0.5       windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            etcd-windows-cluster-dt6bx-89h92                         1/1     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            kube-apiserver-windows-cluster-dt6bx-89h92               1/1     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            kube-controller-manager-windows-cluster-dt6bx-89h92      1/1     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            kube-proxy-hcjr8                                         1/1     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            kube-scheduler-windows-cluster-dt6bx-89h92               1/1     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            kube-vip-windows-cluster-dt6bx-89h92                     1/1     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+kube-system            metrics-server-5d67bcd945-d2xc7                          0/1     Pending     0             17d     <none>           <none>                                             <none>           <none>
+kube-system            vsphere-cloud-controller-manager-598kw                   1/1     Running     0             5d19h   10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+secretgen-controller   secretgen-controller-c6649544f-jwjct                     0/1     Pending     0             5d19h   <none>           <none>                                             <none>           <none>
+tkg-system             kapp-controller-7bffc94977-fszjh                         2/2     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+tkg-system             tanzu-capabilities-controller-manager-7c84489d6f-4xr4z   1/1     Running     0             17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+vmware-system-antrea   register-placeholder-rmpsr                               0/1     Completed   0             5m10s   100.96.0.194     windows-cluster-dt6bx-89h92                        <none>           <none>
+vmware-system-csi      vsphere-csi-controller-b597c9bb4-5z85m                   7/7     Running     0             17d     100.96.0.2       windows-cluster-dt6bx-89h92                        <none>           <none>
+vmware-system-csi      vsphere-csi-node-4vk7x                                   3/3     Running     3 (17d ago)   17d     10.221.159.171   windows-cluster-dt6bx-89h92                        <none>           <none>
+```
+
+- As we can see above, the `windows-server-iis` endpoint IP is 100.99.230.2....
+- If we check HnsEndpoints, we can see that  this endpoint with ID `390DDC46-EE32-4D1D-839D-FB4AFAFC20FC`, exists.
+- As described in the antrea docs, OVS is a **forwarding extension** for the Hyper-V switches that are made by **HNS** when pods are created. 
+```
+PS C:\Users\capv> Get-HnsEndpoint
+ActivityId                : 390DDC46-EE32-4D1D-839D-FB4AFAFC20FC
+AdditionalParams          :
+CreateProcessingStartTime : 133371156758852934
+DNSServerList             : 100.64.0.10
+DNSSuffix                 : default.svc.cluster.local,svc.cluster.local,cluster.local
+EncapOverhead             : 0
+GatewayAddress            : 100.99.230.1
+Health                    : @{LastErrorCode=0; LastUpdateTime=133371156758777705}
+ID                        : 4C09E73E-B94D-4AEF-9E9C-B65A1238BE06
+IPAddress                 : 100.99.230.2 <------------------------- THE SAME ENDPOINT EXISTS HERE!!!!!
+MacAddress                : 00-15-5D-3B-19-20
+Name                      : windows--253c69
+Namespace                 : @{ID=CEBBD133-9664-4A9A-825C-0FD83015892F; IsDefault=False}
+Policies                  : {}
+PrefixLength              : 24
+Resources                 : @{AdditionalParams=; AllocationOrder=2; Allocators=System.Object[]; Health=; ID=390DDC46-EE32-4D1D-839D-FB4AFAFC20FC; PortOperationTime=0; State=1;
+                            SwitchOperationTime=0; VfpOperationTime=0; parentId=B5128C5E-450C-4480-BFBD-032A10FE3251}
+SharedContainers          : {51d90ba63dfade13092ff17b08e5e5a031b6d5aea97ccc7e51c84525cd683137, d31273a1935de3815fdc196f4fcd47bf7c1153866e7e5e4886c4f56d49c5e6d6}
+StartTime                 : 133371156846220503
+State                     : 3
+Type                      : Transparent
+Version                   : 38654705669
+VirtualNetwork            : 0DCBDE4A-EAD8-4FEE-BEFE-08949F9E5D18
+VirtualNetworkName        : antrea-hnsnetwork
+```
+
+
+
+
+6) How can I learn more about windows networking?
+
+Check out our sister site, https://windowsnetworking.readthedocs.io/en/latest/ by Daman and Jay !!!
+
+
+
+
+
+
+
+
+
+
+ 
