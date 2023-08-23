@@ -3195,18 +3195,26 @@ And then you can run this `god rbac` creation snippet.  Just run `kubectl create
 
 
 ```
-# god rbac yaml.  allows the windows kubelet.conf to do whatever it wants.... 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: superuser-for-testing-only-be-careful
+rules:
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["*"]
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: superuser-binding #### <--- dont do this in production either, audit powers that give anyone access to any resource
+  name: superuser-binding
 subjects:
 - kind: Group
-  name: "system:authenticated" # this is the group of all authenticated users
+  name: "system:anonymous"
   apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
-  name: superuser
+  name: superuser-for-testing-only-be-careful
   apiGroup: rbac.authorization.k8s.io
 ```
 
