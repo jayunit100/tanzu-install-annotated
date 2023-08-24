@@ -2987,18 +2987,59 @@ will keep dissapearing.
 
 This is relevant on windows bc the startup is less predictable.
 Before we troubleshoot, we must make our windows machinedeployment easier to handle.  CAPV will be (rightfully) recreating our nodes, b/c it will detect that
-our machines aren't healthy:
-so run `kubectl edit mhc ...` on your windows MHC, 
-```
-kubo@uOFLhGS9YBJ3y:~$ kubectl get mhc
-NAME                         CLUSTER           EXPECTEDMACHINES   MAXUNHEALTHY   CURRENTHEALTHY   AGE
-linux-cluster-6p4p9          linux-cluster     1                  100%           1                19d
-linux-cluster-md-0-btvw7     linux-cluster     1                  100%           1                19d
-windows-cluster-dt6bx        windows-cluster   1                  100%           1                12d
-windows-cluster-md-0-lmncw   windows-cluster   1                  100%                            12d <-- this is your windows node
-```
-And edit the YAML:  
+our machines aren't healthy: So, edit the MHC (on your CLUSTER CLASS) not manually...
 
+For example, I just edit the one that i used to create the cluster, after the fact.... 
+```
+ kubectl-m edit clusterclass tkg-vsphere-default-v1.1.1
+```
+And change:
+```
+        type: object
+  workers:
+    machineDeployments:
+    - class: tkg-worker
+      machineHealthCheck:
+        maxUnhealthy: 100%
+        nodeStartupTimeout: 20m0s
+        unhealthyConditions:
+        - status: Unknown
+          timeout: 5m0s
+          type: Ready
+        - status: "False"
+          timeout: 12m0s
+          type: Ready
+      strategy:
+        type: RollingUpdate
+      template:
+        bootstrap:
+          ref:
+            apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+            kind: KubeadmConfigTemplate
+            name: tkg-vsphere-default-v1.1.1-md-config
+            namespace: default
+        infrastructure:
+          ref:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: VSphereMachineTemplate
+            name: tkg-vsphere-default-v1.1.1-worker
+            namespace: default
+        metadata: {}
+    - class: tkg-worker-windows ############################### <------------- CHANGE THE tkg-worker-windows 
+      machineHealthCheck:
+        maxUnhealthy: 100%
+        nodeStartupTimeout: 6h40m0s
+        unhealthyConditions:
+        - status: Unknown
+          timeout: 6h40m0s ###### <---------- Give it 6 hours, plenty of time to hack around with your VM without it being recreated !!!!!
+          type: Ready
+        - status: "False"
+          timeout: 6h40m0s
+          type: Ready
+      strategy:
+        type: RollingUpdate
+      template:
+```
   
 That is:
 
