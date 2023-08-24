@@ -3565,5 +3565,9 @@ Check out our sister site, https://windowsnetworking.readthedocs.io/en/latest/ b
 
 You can do some local experiments on this.  If you  ssh into your windows nodes, then you can go to C:/Temp/ youll see `antrea.ps1` which you can manually run as a powershell command, to see what happens. Note YYMV The `antrea.ps` script in Temp  is quite complex and does quite a few steps.
 
+**Once you like your modification**
+
+You can then create a custom windows clusterclass which define the antrea.ps1 scripts in its own way, deviating from the TKG defaults and use this clusterclass when making new clusters, instead of the default TKG Clusterclasses.
+
 
  
