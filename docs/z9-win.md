@@ -3561,8 +3561,9 @@ VirtualNetworkName        : antrea-hnsnetwork
 
 Check out our sister site, https://windowsnetworking.readthedocs.io/en/latest/ by Daman and Jay !!!
 
+7) Can I modify the way antrea is installed ?
 
-
+You can do some local experiments on this.  If you  ssh into your windows nodes, then you can go to C:/Temp/ youll see `antrea.ps1` which you can manually run as a powershell command, to see what happens. Note YYMV The `antrea.ps` script in Temp  is quite complex and does quite a few steps.
 
 
  
