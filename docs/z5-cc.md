@@ -17,11 +17,18 @@ kubo@uOFLhGS9YBJ3y:~$ kubectl get kubeadmconfigtemplate linux-cluster-md-0-boots
 
 TKG 2.1+ Uses clusterclasses by default and we reference them many times here.
 
-## What is a cluster ? 
+## What is a "cluster class" ? 
 
-- A **controlplane** reference
-- An **infrastructure** reference
-- and a **topology** which is:
+A Cluster class is 
+- a controlplane
+- a infrastructure
+- bunch of patches
+- variable definitions
+
+A **cluster** then has 
+- the set of variables that a user defines
+- the set of objects which result from consuming the patches in the cluster class, parameterized by the variables
+- a **topology** which is:
   - a class name (i.e. ` class: tkg-vsphere-default-v1.0.0`)
   - a set of variables, which define parameterization of this class ( i.e. `auditLogging.Enabled=true`)
 
