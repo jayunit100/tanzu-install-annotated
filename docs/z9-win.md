@@ -2735,6 +2735,12 @@ At this point you can see image builder beggining to clean up after itself.... r
 
 And thats it.  The ova is now loaded in our windows cluster and can be used by TKG to make a Windows Cluster!
 
+# Now you can make a TKG Cluster !
+
+Follow the guide in https://docs-staging.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/2.3/using-tkg/workload-clusters-advanced-vsphere.html#windows .  In particular you will
+- make an OSImage that is connected to a TKR, and points to the OVA you made above via the `<VERSION>` 
+- Create a cluster where the worker nodes use that windows OSImage (by saying you want Windows).
+
 
 ## Windows OSImage debugging
 
