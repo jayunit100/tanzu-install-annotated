@@ -10,6 +10,61 @@ if you asked it.  But somethings need careful explanation.
 - First we upgrade packages
 - Then we upgrade nodes
 
+## How packages are structured in TKG
+
+TKG has two types of packages that you should understand, management and core packages. The lifecycle of these
+packages is different - 
+
+*Management Packages*
+
+Examples of management packages are things like ****
+
+- Required only on management cluster.
+- Contents may change after releases.
+- No customizability
+
+*Core Packages*
+
+Examples of core packages are things like **antrea**, which will go on both WL and MGMT clusters.
+
+- Required on both management and workload clusters.
+- Networking section available for CNI options.
+
+
+## Package breakdown
+
+Since carvel and package management is so key to TKG, heres the breakdown:
+
+MANAGEMENT PACKAGES
+- tkg (TKG Meta Package)
+- framework (Framework Meta Package)
+- addons-manager
+- tkr-service
+- featuregates
+- tanzu-auth
+- cliplugins
+- tkg-clusterclass (TKG ClusterClass Meta Package)
+- tkg-clusterclass-aws
+- tkg-clusterclass-azure
+- tkg-clusterclass-vsphere
+- core-management-plugins
+- tkr-source-controller
+
+**?Unused TBD why?**
+- cluster-api
+- cluster-api-bootstrap-kubeadm
+- cluster-api-control-plane-kubeadm
+- cluster-api-provider-aws
+- cluster-api-provider-azure
+- cluster-api-provider-vsphere
+
+STANDALONE PACKAGES no dependencies:
+- standalone-plugins
+- capabilities
+- tkg-autoscaler
+- tkg-storageclass
+
+
 ## Bootstrap Controller
 
 The TKG Bootstrap controller is responsible for coordinating a complex dance of "pausing" and "unpausing" clusers.  
