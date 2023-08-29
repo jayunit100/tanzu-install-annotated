@@ -1,5 +1,7 @@
 THIS IS WIP not sure how correct this all is !!!
 
+<img width="1261" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/f2217325-aa83-44cf-8fb1-867d242be665">
+
 # How do upgrades work
 
 Theres alot of boiler plate around Upgrades that you probably already can make up in your head, or chatGPT could just tell you
