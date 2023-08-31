@@ -91,6 +91,26 @@ spec: {}
 
 ```
 
+## What about windows nodes
+
+You can setup windows on calico as a **host process container** which is super easy:
+
+```
+curl https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico-windows-vxlan.yaml -o calico-windows.yaml
+```
+Then from there, you can just create it via `kubectl create ...`
+Note though that NOW you need to install a kube-proxy implementation .... there are instructions to do this here
+
+```
+curl https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/windows-kube-proxy.yaml -o windows-kube-proxy.yaml
+kubectl apply -f windows-kube-proxy.yaml
+kubectl describe ds -n kube-system kube-proxy-windows
+```
+
+
+
+
+
 
 
 
