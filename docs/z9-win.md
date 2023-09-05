@@ -399,13 +399,22 @@ script that jumps into vsphere, makes a windows VM, and then kubernetizes the VM
 Note for TKG 2.3, youll want to use 1.26.5 as the k8s version instead of 1.25....and modify the parameters below
 ```
 -  "build_version": "windows-2019-kube-v1.25.7",
-+  "build_version": "windows-2019-kube-v1.26.5",                                                                                                                        - "kubernetes_semver": "v1.25.7+vmware.2",                                                                                                                              - "kubernetes_series": "v1.25.7",                                                                                                                                       + "kubernetes_semver": "v1.26.5+vmware.2",                                                                                                                              + "kubernetes_series": "v1.26.5",
++  "build_version": "windows-2019-kube-v1.26.5",
+- "kubernetes_series": "v1.25.7",
++ "kubernetes_semver": "v1.26.5+vmware.2",
++ "kubernetes_series": "v1.26.5",
 ```
 Then the OVA will come out looking like `windows-2019-kube-1.26.5`.
 ```
 {
   "additional_executables_destination_path": "C:\\ProgramData\\Temp",                                                                                             
-  "additional_executables_list": "http://10.221.159.247:30008/files/antrea-windows/antrea-windows-advanced.zip,http://10.221.159.247:30008/files/kubernetes/kube-proxy.exe",                                                                                                                                                      "additional_executables": "true",                                                                                                                               "additional_prepull_images": "mcr.microsoft.com/windows/servercore:ltsc2019",                                                                                   "build_version": "windows-2019-kube-v1.25.7",                                                                                                                   "cloudbase_init_url": "http://10.221.159.247:30008/files/cloudbase_init/CloudbaseInitSetup_1_1_4_x64.msi",                                                      "cluster": "VSPHERE-CLUSTER-NAME",                                                                                                                              "containerd_sha256_windows": "2e0332aa57ebcb6c839a8ec807780d662973a15754573630bea249760cdccf2a",                                                              
+  "additional_executables_list": "http://10.221.159.247:30008/files/antrea-windows/antrea-windows-advanced.zip,http://10.221.159.247:30008/files/kubernetes/kube-proxy.exe",
+  "additional_executables": "true",
+  "additional_prepull_images": "mcr.microsoft.com/windows/servercore:ltsc2019",
+  "build_version": "windows-2019-kube-v1.25.7",
+  "cloudbase_init_url": "http://10.221.159.247:30008/files/cloudbase_init/CloudbaseInitSetup_1_1_4_x64.msi",
+  "cluster": "VSPHERE-CLUSTER-NAME",
+  "containerd_sha256_windows": "2e0332aa57ebcb6c839a8ec807780d662973a15754573630bea249760cdccf2a",                                                              
   "containerd_url": "http://10.221.159.247:30008/files/containerd/cri-containerd-v1.6.18+vmware.1.windows-amd64.tar",                                             
   "containerd_version": "v1.6.18",
   "goss_inspect_mode": "true",                                                                                                                                    
