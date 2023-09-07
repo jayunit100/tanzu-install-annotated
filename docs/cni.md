@@ -93,6 +93,11 @@ spec: {}
 
 ## What about windows nodes
 
+For windows nodes, you can run a host-process container you need to make sure that 
+- IPIP is disabled, VXlan:Always
+- bird checks are disabled (delete the liveness and readiness related calico probes).  You can use 
+- HNS is created (this can be done by manually running this script https://gist.githubusercontent.com/jayunit100/c7b2e69110bc16af69048be1f065e555/raw/f61133f70dcfbbf02defbe8635ca4c4eaa72e6e6/gistfile1.txt which works on TKG nodes to create an HNS Network -- it will fail but thats ok) .... 
+
 You can setup windows on calico as a **host process container** which is super easy:
 
 ```
@@ -106,7 +111,22 @@ curl https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/wi
 kubectl apply -f windows-kube-proxy.yaml
 kubectl describe ds -n kube-system kube-proxy-windows
 ```
+But this kube-proxy will WAIT until an HNS Network exists.  So how do you create the HNS NEtwork? 
 
+## One hack
+
+- install kube proxy as shown
+- install calico as a host process container
+- SSH into each node and run the calico install script to setup some of the hns stuff that the kube proxy needs .
+
+Im not sure why, but it appears in some cases calico running in a host process container doesnt make the HNS NEtwork.  So you can 
+ssh into nodes and manually run https://github.com/jayunit100/k8sprototypes/blob/master/windows/calico/calico-hack-fixer.ps1 one at a time
+to unblock the kube proxy.  Once this happens:
+- the kube proxy will have an HNS netwwork and start
+- it will make the internal service IP that calico node agent needs to access the APISERver
+- the calico agent will then come up
+
+  And you can then run pods.
 
 
 
