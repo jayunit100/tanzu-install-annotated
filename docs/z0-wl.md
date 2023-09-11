@@ -51,7 +51,6 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 | vmware-system-antrea    | register-placeholder                | ✓                             | ✓                        |
 | vmware-system-csi       | vsphere-csi-controller              | ✓                             | ✓                        |
 | vmware-system-csi       | vsphere-csi-node                    | ✓                             | ✓                        |
-| corgi-test-privileged   | corgi-test-dqhnp                    | ✓                             |                          |
 ```
 
 # WL
