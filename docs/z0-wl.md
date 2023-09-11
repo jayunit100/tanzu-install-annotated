@@ -4,51 +4,52 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 
 ## Things that ONLY run on management clusters
 
+Management clusters manage all the auth and infra for workload clusters.  Thus some microservices not on WL clusters, are always explained in terms of "this isnt needed to run apps, but it is needed to manage clusters"
+
 - CAPI Pods only run in management cluster, bc they are literally what manage the WL clusters.
 - tanzu-auth / tanzu-auth-controller-manager: The management cluster does need to manage authentication to APIServers for ALL workload clusters... Thus this has to run on the management level.  `tanzu-auth-controller-manager` is the controller for **pinniped**, so it installs and manages our authentication wrappers in TKG.  Only mgmt cluster needs to manage this since it controls auth to many workload clusters.
 - object-propagation-controller-manag: CAPI clusterclasses get copied to multiple namespaces.  This is something only done to support creation of new CAPI clusters, thus WL clusters dont run this . 
 - tanzu-addons-controller-manager: Tanzu Addons manager will put carvel packages onto WL clusters. However, it is **kapp** on the wl cluster that installs them.  Thus, the WL cluster doesnt need to run addons bc management does this for it on bootstrap... the workload cluster **does though** notably, run **kapp controller** to install those packages ONCE addons manager puts them on there!
+- cert-manager: Cert-manager pods are used to rotate CAPI containers so, they dont run on WL clusters.
 
 Here's a table that shos all the common pods and where they run.
 
 ```
-| Namespace               | Pod Type                            | tkg-mgmt-vc-admin@tkg-mgmt-vc | wl-antrea-admin@wl-antrea|
-|-------------------------|-------------------------------------|-------------------------------|--------------------------|
-| NAMESPACE               | NAME                                | ✓                             | ✓                        |
-| avi-system              | ako                                 | ✓                             | ✓                        |
-| caip-in-cluster-system  | caip-in-cluster-controller-manager  | ✓                             |                          |
-| capi-kubeadm-btstrp-sys | capi-kubeadm-btstrp-ctrlmgr         | ✓                             |                          |
-| capi-kubeadm-cp-system  | capi-kubeadm-cp-controller-manager  | ✓                             |                          |
-| capv-system             | capv-controller-manager             | ✓                             | ✓                        |
-| cert-manager            | cert-manager                        | ✓                             |                          |
-| cert-manager            | cert-manager-cainjector             | ✓                             |                          |
-| cert-manager            | cert-manager-webhook                | ✓                             |                          |
-| kube-system             | antrea-agent                        | ✓                             | ✓                        |
-| kube-system             | antrea-controller                   | ✓                             | ✓                        |
-| kube-system             | coredns                             | ✓                             | ✓                        |
-| kube-system             | etcd                                | ✓                             | ✓                        |
-| kube-system             | kube-apiserver                      | ✓                             | ✓                        |
-| kube-system             | kube-controller-manager             | ✓                             | ✓                        |
-| kube-system             | kube-proxy                          | ✓                             | ✓                        |
-| kube-system             | kube-scheduler                      | ✓                             | ✓                        |
-| kube-system             | metrics-server                      | ✓                             | ✓                        |
-| kube-system             | vsphere-cloud-controller-manager    | ✓                             | ✓                        |
-| secretgen-controller    | secretgen-controller                | ✓                             | ✓                        |
-| tanzu-auth              | tanzu-auth-controller-manager       | ✓                             |                          |
-| tkg-system-networking   | ako-operator-controller-manager     | ✓                             |                          |
-| tkg-system              | kapp-controller                     | ✓                             | ✓                        |
-| tkg-system              | object-propagation-controller-manag | ✓                             |                          |
-| tkg-system              | tanzu-addons-controller-manager     | ✓                             |                          |
-| tkg-system              | tanzu-capabilities-controller-manag | ✓                             | ✓                        |
-| tkg-system              | tanzu-featuregates-controller-manag | ✓                             |                          |
-| tkg-system              | tkr-conversion-webhook-manager      | ✓                             |                          |
-| tkg-system              | tkr-resolver-cluster-webhook-manag  | ✓                             |                          |
-| tkg-system              | tkr-source-controller-manager       | ✓                             |                          |
-| tkg-system              | tkr-status-controller-manager       | ✓                             |                          |
-| tkg-system              | tkr-vsphere-resolver-webhook-mana   | ✓                             |                          |
-| vmware-system-antrea    | register-placeholder                | ✓                             | ✓                        |
-| vmware-system-csi       | vsphere-csi-controller              | ✓                             | ✓                        |
-| vmware-system-csi       | vsphere-csi-node                    | ✓                             | ✓                        |
+| Namespace               | Pod Type                            | tkg-mgmt-vc-admin@tkg-mgmt-vc | wl-antrea-admin@wl-antrea| window|
+|-------------------------|-------------------------------------|-------------------------------|--------------------------| ------|
+| NAMESPACE               | NAME                                | ✓                             | ✓                        | ?     |
+| avi-system              | ako                                 | ✓                             | ✓                        |       |
+| caip-in-cluster-system  | caip-in-cluster-controller-manager  | ✓                             |                          |       |
+| capi-kubeadm-btstrp-sys | capi-kubeadm-btstrp-ctrlmgr         | ✓                             |                          |       |
+| capi-kubeadm-cp-system  | capi-kubeadm-cp-controller-manager  | ✓                             |                          |       |
+| capv-system             | capv-controller-manager             | ✓                             | ✓                        |       |
+| cert-manager            | cert-manager                        | ✓                             |                          |       |
+| cert-manager            | cert-manager-cainjector             | ✓                             |                          |       |
+| cert-manager            | cert-manager-webhook                | ✓                             |                          |       |       
+| kube-system             | antrea-agent                        | ✓                             | ✓                        |  ✓    |
+| kube-system             | antrea-controller                   | ✓                             | ✓                        |  ✓    |
+| kube-system             | coredns                             | ✓                             | ✓                        |  ✓    |
+| kube-system             | etcd                                | ✓                             | ✓                        | ✓     |   
+| kube-system             | kube-apiserver                      | ✓                             | ✓                        | ✓     |
+| kube-system             | kube-controller-manager             | ✓                             | ✓                        | ✓     |
+| kube-system             | kube-proxy                          | ✓                             | ✓                        | ✓     |
+| kube-system             | kube-scheduler                      | ✓                             | ✓                        | ✓     |
+| kube-system             | metrics-server                      | ✓                             | ✓                        |  ✓    |
+| kube-system             | vsphere-cloud-controller-manager    | ✓                             | ✓                        |  ✓    |
+| secretgen-controller    | secretgen-controller                | ✓                             | ✓                        |  ✓    |
+| tkg-system              | kapp-controller                     | ✓                             | ✓                        |   ✓   |
+| tkg-system              | object-propagation-controller-manag | ✓                             |                          |       |
+| tkg-system              | tanzu-addons-controller-manager     | ✓                             |                          |       |
+| tkg-system              | tanzu-capabilities-controller-manag | ✓                             | ✓                        |  ✓    |
+| tkg-system              | tanzu-featuregates-controller-manag | ✓                             |                          |       |  
+| tkg-system              | tkr-conversion-webhook-manager      | ✓                             |                          |       |
+| tkg-system              | tkr-resolver-cluster-webhook-manag  | ✓                             |                          |       |
+| tkg-system              | tkr-source-controller-manager       | ✓                             |                          |       |
+| tkg-system              | tkr-status-controller-manager       | ✓                             |                          |       |
+| tkg-system              | tkr-vsphere-resolver-webhook-mana   | ✓                             |                          |       |
+| vmware-system-antrea    | register-placeholder                | ✓                             | ✓                        |       |
+| vmware-system-csi       | vsphere-csi-controller              | ✓                             | ✓                        |  ✓    | 
+| vmware-system-csi       | vsphere-csi-node                    | ✓                             | ✓                        |  CP   |
 ```
 
 # WL
