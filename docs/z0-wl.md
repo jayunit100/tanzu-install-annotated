@@ -1,6 +1,7 @@
 # WL vs MGMT: Differences
 
-WL cluster and mgmt cluster run different types of pods.  Heres a quick summary of the differences.
+WL cluster and mgmt cluster run different types of pods.  Heres a quick summary of the differences.  
+
 ```
 | Namespace               | Pod Type                            | tkg-mgmt-vc-admin@tkg-mgmt-vc | wl-antrea-admin@wl-antrea |
 |-------------------------|-------------------------------------|-------------------------------|--------------------------|
@@ -15,7 +16,7 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 | cert-manager            | cert-manager-cainjector             | ✓                             |                          |
 | cert-manager            | cert-manager-webhook                | ✓                             |                          |
 | kube-system             | antrea-agent                        | ✓                             | ✓                        |
-| kube-system             | antrea-controller                   | ✓                             |                          |
+| kube-system             | antrea-controller                   | ✓                             | ✓                        |
 | kube-system             | coredns                             | ✓                             | ✓                        |
 | kube-system             | etcd                                | ✓                             | ✓                        |
 | kube-system             | kube-apiserver                      | ✓                             | ✓                        |
