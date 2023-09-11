@@ -7,8 +7,8 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 | NAMESPACE               | NAME                                | ✓                             | ✓                        |
 | avi-system              | ako                                 | ✓                             | ✓                        |
 | caip-in-cluster-system  | caip-in-cluster-controller-manager  | ✓                             |                          |
-| capi-kubeadm-btstrp-sys | capi-kubeadm-btstrp-ctrlmgr      | ✓                             |                          |
-| capi-kubeadm-cp-system  | capi-kubeadm-cp-controller-manager   | ✓                             |                          |
+| capi-kubeadm-btstrp-sys | capi-kubeadm-btstrp-ctrlmgr         | ✓                             |                          |
+| capi-kubeadm-cp-system  | capi-kubeadm-cp-controller-manager  | ✓                             |                          |
 | capi-system             | capi-controller-manager             | ✓                             |                          |
 | capv-system             | capv-controller-manager             | ✓                             |                          |
 | cert-manager            | cert-manager                        | ✓                             |                          |
