@@ -16,7 +16,7 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 | cert-manager            | cert-manager-webhook                | ✓                             |                          |
 | kube-system             | antrea-agent                        | ✓                             | ✓                        |
 | kube-system             | antrea-controller                   | ✓                             |                          |
-| kube-system             | coredns                             | ✓                             |✓                         |
+| kube-system             | coredns                             | ✓                             | ✓                        |
 | kube-system             | etcd                                | ✓                             | ✓                        |
 | kube-system             | kube-apiserver                      | ✓                             | ✓                        |
 | kube-system             | kube-controller-manager             | ✓                             | ✓                        |
