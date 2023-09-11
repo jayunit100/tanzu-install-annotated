@@ -12,6 +12,7 @@ Management clusters manage all the auth and infra for workload clusters.  Thus s
 - tanzu-addons-controller-manager: Tanzu Addons manager will put carvel packages onto WL clusters. However, it is **kapp** on the wl cluster that installs them.  Thus, the WL cluster doesnt need to run addons bc management does this for it on bootstrap... the workload cluster **does though** notably, run **kapp controller** to install those packages ONCE addons manager puts them on there!
 - cert-manager: Cert-manager pods are used to rotate CAPI containers so, they dont run on WL clusters.
 
+There is a 3rd column here for **windows** which shows that somet things (like say 
 Here's a table that shos all the common pods and where they run.
 
 ```
@@ -50,6 +51,19 @@ Here's a table that shos all the common pods and where they run.
 | vmware-system-antrea    | register-placeholder                | ✓     | ✓  |       |
 | vmware-system-csi       | vsphere-csi-controller              | ✓     | ✓  |  ✓    | 
 | vmware-system-csi       | vsphere-csi-node                    | ✓     | ✓  |  CP   |
+```
+Note that in windows you need to add tolerations to linuxy system pods that you want to run so they run **on your controlplane**... i.e.
+```
+  tolerations:
+  - effect: NoSchedule
+    key: node.cloudprovider.kubernetes.io/uninitialized
+    value: "true"
+  - effect: NoSchedule
+    key: node.kubernetes.io/not-ready
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
 ```
 
 # WL
