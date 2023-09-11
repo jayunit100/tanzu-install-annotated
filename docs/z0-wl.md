@@ -2,8 +2,17 @@
 
 WL cluster and mgmt cluster run different types of pods.  Heres a quick summary of the differences.  
 
+- CAPI Pods only run in management cluster
+- tanzu-auth
+- tanzu-auth-controller-manager       
+- ako-operator-controller-manager   
+- kapp-controller                   
+- object-propagation-controller-manag 
+- tanzu-addons-controller-manager
+
+
 ```
-| Namespace               | Pod Type                            | tkg-mgmt-vc-admin@tkg-mgmt-vc | wl-antrea-admin@wl-antrea |
+| Namespace               | Pod Type                            | tkg-mgmt-vc-admin@tkg-mgmt-vc | wl-antrea-admin@wl-antrea|
 |-------------------------|-------------------------------------|-------------------------------|--------------------------|
 | NAMESPACE               | NAME                                | ✓                             | ✓                        |
 | avi-system              | ako                                 | ✓                             | ✓                        |
@@ -29,7 +38,7 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 | secretgen-controller    | secretgen-controller                | ✓                             | ✓                        |
 | tanzu-auth              | tanzu-auth-controller-manager       | ✓                             |                          |
 | tkg-system-networking   | ako-operator-controller-manager     | ✓                             |                          |
-| tkg-system              | kapp-controller                     | ✓                             |                          |
+| tkg-system              | kapp-controller                     | ✓                             | ✓                        |
 | tkg-system              | object-propagation-controller-manag | ✓                             |                          |
 | tkg-system              | tanzu-addons-controller-manager     | ✓                             |                          |
 | tkg-system              | tanzu-capabilities-controller-manag | ✓                             | ✓                        |
@@ -43,8 +52,6 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 | vmware-system-csi       | vsphere-csi-controller              | ✓                             | ✓                        |
 | vmware-system-csi       | vsphere-csi-node                    | ✓                             | ✓                        |
 | corgi-test-privileged   | corgi-test-dqhnp                    | ✓                             |                          |
-| kube-system             | antrea-agent                        | ✓                             | ✓                        |
-| kube-system             | antrea-controller-cbtcl             | ✓                             |                          |
 ```
 
 # WL
