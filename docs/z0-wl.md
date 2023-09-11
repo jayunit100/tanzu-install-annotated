@@ -2,11 +2,14 @@
 
 WL cluster and mgmt cluster run different types of pods.  Heres a quick summary of the differences.  
 
+## Things that ONLY run on management clusters
+
 - CAPI Pods only run in management cluster, bc they are literally what manage the WL clusters.
 - tanzu-auth / tanzu-auth-controller-manager: The management cluster does need to manage authentication to APIServers for ALL workload clusters... Thus this has to run on the management level.  `tanzu-auth-controller-manager` is the controller for **pinniped**, so it installs and manages our authentication wrappers in TKG.  Only mgmt cluster needs to manage this since it controls auth to many workload clusters.
 - object-propagation-controller-manag: CAPI clusterclasses get copied to multiple namespaces.  This is something only done to support creation of new CAPI clusters, thus WL clusters dont run this . 
 - tanzu-addons-controller-manager: Tanzu Addons manager will put carvel packages onto WL clusters. However, it is **kapp** on the wl cluster that installs them.  Thus, the WL cluster doesnt need to run addons bc management does this for it on bootstrap... the workload cluster **does though** notably, run **kapp controller** to install those packages ONCE addons manager puts them on there!
 
+Here's a table that shos all the common pods and where they run.
 
 ```
 | Namespace               | Pod Type                            | tkg-mgmt-vc-admin@tkg-mgmt-vc | wl-antrea-admin@wl-antrea|
@@ -16,8 +19,7 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 | caip-in-cluster-system  | caip-in-cluster-controller-manager  | ✓                             |                          |
 | capi-kubeadm-btstrp-sys | capi-kubeadm-btstrp-ctrlmgr         | ✓                             |                          |
 | capi-kubeadm-cp-system  | capi-kubeadm-cp-controller-manager  | ✓                             |                          |
-| capi-system             | capi-controller-manager             | ✓                             |                          |
-| capv-system             | capv-controller-manager             | ✓                             |                          |
+| capv-system             | capv-controller-manager             | ✓                             | ✓                        |
 | cert-manager            | cert-manager                        | ✓                             |                          |
 | cert-manager            | cert-manager-cainjector             | ✓                             |                          |
 | cert-manager            | cert-manager-webhook                | ✓                             |                          |
@@ -31,7 +33,6 @@ WL cluster and mgmt cluster run different types of pods.  Heres a quick summary 
 | kube-system             | kube-scheduler                      | ✓                             | ✓                        |
 | kube-system             | metrics-server                      | ✓                             | ✓                        |
 | kube-system             | vsphere-cloud-controller-manager    | ✓                             | ✓                        |
-| kube-system             | vsphere-cloud-controller-manager    | ✓                             |                          |
 | secretgen-controller    | secretgen-controller                | ✓                             | ✓                        |
 | tanzu-auth              | tanzu-auth-controller-manager       | ✓                             |                          |
 | tkg-system-networking   | ako-operator-controller-manager     | ✓                             |                          |
