@@ -1,3 +1,51 @@
+# WL vs MGMT: Differences
+
+WL cluster and mgmt cluster run different types of pods.  Heres a quick summary of the differences.
+```
+| Namespace               | Pod Type                            | tkg-mgmt-vc-admin@tkg-mgmt-vc | wl-antrea-admin@wl-antrea |
+|-------------------------|-------------------------------------|-------------------------------|--------------------------|
+| NAMESPACE               | NAME                                | ✓                             | ✓                        |
+| avi-system              | ako                                 | ✓                             | ✓                        |
+| caip-in-cluster-system  | caip-in-cluster-controller-manager  | ✓                             |                          |
+| capi-kubeadm-btstrp-sys | capi-kubeadm-btstrp-ctrlmgr      | ✓                             |                          |
+| capi-kubeadm-cp-system  | capi-kubeadm-cp-controller-manager   | ✓                             |                          |
+| capi-system             | capi-controller-manager             | ✓                             |                          |
+| capv-system             | capv-controller-manager             | ✓                             |                          |
+| cert-manager            | cert-manager                        | ✓                             |                          |
+| cert-manager            | cert-manager-cainjector             | ✓                             |                          |
+| cert-manager            | cert-manager-webhook                | ✓                             |                          |
+| kube-system             | antrea-agent                        | ✓                             | ✓                        |
+| kube-system             | antrea-controller                   | ✓                             |                          |
+| kube-system             | coredns                             | ✓                             |✓                         |
+| kube-system             | etcd                                | ✓                             | ✓                        |
+| kube-system             | kube-apiserver                      | ✓                             | ✓                        |
+| kube-system             | kube-controller-manager             | ✓                             | ✓                        |
+| kube-system             | kube-proxy                          | ✓                             | ✓                        |
+| kube-system             | kube-scheduler                      | ✓                             | ✓                        |
+| kube-system             | metrics-server                      | ✓                             | ✓                        |
+| kube-system             | vsphere-cloud-controller-manager    | ✓                             | ✓                        |
+| kube-system             | vsphere-cloud-controller-manager    | ✓                             |                          |
+| secretgen-controller    | secretgen-controller                | ✓                             | ✓                        |
+| tanzu-auth              | tanzu-auth-controller-manager       | ✓                             |                          |
+| tkg-system-networking   | ako-operator-controller-manager     | ✓                             |                          |
+| tkg-system              | kapp-controller                     | ✓                             |                          |
+| tkg-system              | object-propagation-controller-manag | ✓                             |                          |
+| tkg-system              | tanzu-addons-controller-manager     | ✓                             |                          |
+| tkg-system              | tanzu-capabilities-controller-manag | ✓                             | ✓                        |
+| tkg-system              | tanzu-featuregates-controller-manag | ✓                             |                          |
+| tkg-system              | tkr-conversion-webhook-manager      | ✓                             |                          |
+| tkg-system              | tkr-resolver-cluster-webhook-manag  | ✓                             |                          |
+| tkg-system              | tkr-source-controller-manager       | ✓                             |                          |
+| tkg-system              | tkr-status-controller-manager       | ✓                             |                          |
+| tkg-system              | tkr-vsphere-resolver-webhook-mana   | ✓                             |                          |
+| vmware-system-antrea    | register-placeholder                | ✓                             | ✓                        |
+| vmware-system-csi       | vsphere-csi-controller              | ✓                             | ✓                        |
+| vmware-system-csi       | vsphere-csi-node                    | ✓                             | ✓                        |
+| corgi-test-privileged   | corgi-test-dqhnp                    | ✓                             |                          |
+| kube-system             | antrea-agent                        | ✓                             | ✓                        |
+| kube-system             | antrea-controller-cbtcl             | ✓                             |                          |
+```
+
 # WL
 
 Now lets see what happens when we bring up the workload cluster
