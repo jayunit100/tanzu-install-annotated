@@ -3,8 +3,7 @@
 WL cluster and mgmt cluster run different types of pods.  Heres a quick summary of the differences.  
 
 - CAPI Pods only run in management cluster, bc they are literally what manage the WL clusters.
-- tanzu-auth: is only needed to authorize things, so its a mgmt pod. 
-- tanzu-auth-controller-manager: tanzu-auth is the controller for **pinniped**, so it installs and manages our authentication wrappers in TKG.  Only mgmt cluster needs to manage this since it controls auth to many workload clusters.
+- tanzu-auth / tanzu-auth-controller-manager: The management cluster does need to manage authentication to APIServers for ALL workload clusters... Thus this has to run on the management level.  `tanzu-auth-controller-manager` is the controller for **pinniped**, so it installs and manages our authentication wrappers in TKG.  Only mgmt cluster needs to manage this since it controls auth to many workload clusters.
 - object-propagation-controller-manag: CAPI clusterclasses get copied to multiple namespaces.  This is something only done to support creation of new CAPI clusters, thus WL clusters dont run this . 
 - tanzu-addons-controller-manager: Tanzu Addons manager will put carvel packages onto WL clusters. However, it is **kapp** on the wl cluster that installs them.  Thus, the WL cluster doesnt need to run addons bc management does this for it on bootstrap... the workload cluster **does though** notably, run **kapp controller** to install those packages ONCE addons manager puts them on there!
 
