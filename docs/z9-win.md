@@ -3626,4 +3626,9 @@ You can do some local experiments on this.  If you  ssh into your windows nodes,
 You can then create a custom windows clusterclass which define the antrea.ps1 scripts in its own way, deviating from the TKG defaults and use this clusterclass when making new clusters, instead of the default TKG Clusterclasses.
 
 
- 
+## Antrea on windows flow
+
+The flow for antrea on windows looks like this.  Note the SSL issue, which sometimes can bite you when downloading from fulgan.com.  We have a github issue in place to fix it:
+https://github.com/antrea-io/antrea/issues/5479 
+![image](https://github.com/jayunit100/tanzu-install-annotated/assets/826111/487b8021-a369-4c79-949c-f4989e75e6e7)
+
