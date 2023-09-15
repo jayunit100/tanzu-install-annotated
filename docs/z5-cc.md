@@ -1,9 +1,25 @@
 # CC
 
-The data model for a cluster is something like this:
+The data model for a cluster is something like this, notably:
 
-<img width="1942" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/cba7819d-7917-4bb9-be11-cf32f6050998">
+- Kapp is a first class aspect of the TKG data model for a clusterbootstrapping  - we define packages and kapp configuration in the definition of how clusters are bootstrapped
+- there are "additional packages" that are installed on a TKG workload when it is created. these customize its behaviour beyond its generic CAPI/CAPV definition
 
+<img width="1509" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/111d1bd2-0ce9-44a4-9165-7252f9ae21f1">
+
+The cluster is parameterized w/ the following **VARIABLES**
+- **cni**: Represents the Container Network Interface (CNI) plugin, e.g. antrea.
+- **controlPlaneCertificateRotation**: Governs certificate rotation, activated true and rotates 90 days before expiry.
+- **imageRepository**: Repository for container images, e.g. projects-stg.registry.vmware.com/tkg.
+- **auditLogging**: Specifies if audit logging is on, e.g. true.
+- **podSecurityStandard**: Sets security standard levels; audit: restricted, deactivated: false, warn: restricted.
+- **apiServerEndpoint**: Endpoint for the Kubernetes API Server, e.g. 10.215.199.38.
+- **aviAPIServerHAProvider**: Specifies if the HA provider for the API server is Avi, e.g. false.
+- **vcenter**: Configurations for the vCenter server with properties like cloneMode, datacenter, datastore, etc.
+- **user**: Contains user-related configurations, notably the SSH authorized keys.
+- **controlPlane**: Specifies control plane machine configurations, including disk, memory, and CPU details.
+- **worker**: Configurations for worker nodes, including disk, memory, and CPU details.
+- **security**: Security-related configurations, such as fileIntegrityMonitoring, imagePolicy, kubeletOptions, and systemCryptoPolicy.
 
 
 # UPDATEs in 2.3
