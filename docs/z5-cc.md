@@ -1,5 +1,10 @@
 # CC
 
+The data model for a cluster is something like this:
+
+<img width="1942" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/cba7819d-7917-4bb9-be11-cf32f6050998">
+
+
 
 # UPDATEs in 2.3
 
