@@ -10,6 +10,10 @@ It looks something like this....
 - C:/k/... is where antrea and the kubernetes binaries live
 - Image builder sets up the initial nodes disk topology for these items, via the **windows resource kit** or **burrito**
 
+## How the image above is loaded by TKG? 
+
+The TKR, OSImage.  Here is how they connect:
+
 <img width="1386" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/68219ea8-39b6-42b4-aed7-c7648c78a0ca">
 
 To understand image builder, and how it related to TKG, you have to understand TKRs.
