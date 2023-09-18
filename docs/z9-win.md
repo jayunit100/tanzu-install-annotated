@@ -4,7 +4,8 @@ What is a TKG windows cluster?
 
 It looks something like this.... 
 
-<img width="1094" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/b4b21f89-13db-4f70-9e2e-4718932270b1">
+<img width="1036" alt="image" src="https://github.com/jayunit100/tanzu-install-annotated/assets/826111/4899d92a-69c6-439c-8023-a6c0dc5f6f60">
+
 
 - C:/Program Files/ .... is where containerd will live
 - C:/k/... is where antrea and the kubernetes binaries live
