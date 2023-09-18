@@ -1088,6 +1088,23 @@ loop for building a windows Kubernetes node....
 [0;32m    vsphere: TASK [kubernetes : Add firewall rule for kubelet] ******************************[0m
 [0;32m    vsphere: changed: [default][0m
 ```
+
+## image-builder: Antrea is important 
+
+Its important to understand antrea since it will be something you might need to configure specially on windows nodes.  It's different from antrea on linux.  OVSDB for example that runs as a local windows process might need an SSL library installed on your windowsnode. 
+
+| Feature/Aspect          | Antrea on Linux                                       | Antrea on Windows                                |
+|-------------------------|-------------------------------------------------------|--------------------------------------------------|
+| **Platform**            | Linux OS                                              | Windows Server w TKG K8s                         |
+| **OVS Integration**     | Native OVS support.                                   | Uses OVS Windows port.                           |
+| **Networking Mode**     | Uses Linux bridging and routing.                      | Uses OVS for pod-to-pod networking.              |
+| **Network Policies**    | Fully supported with OVS.                             | UDP might have issues, also things like antrea egress wont work. loadBalancserSourceRanges largely untested in windows environments   |
+| **Runtime**             | Typically container runtimes like containerd, Docker. | Windows Server with containerd, but OVS runs directly on the host and not inside a container. |
+| **Supported Protocols** | All protocols supported by OVS on Linux.              | Some protocol limitations due to Windows OS.     |
+| **Performance**         | Direct kernel integration offers optimal performance. | May have overhead due to OVS Windows port and Windows networking stack.|
+
+
+
 ## image-builder: "Additional downloads" i.e. antrea
 
 
