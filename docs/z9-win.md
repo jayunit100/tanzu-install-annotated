@@ -1106,14 +1106,26 @@ Its important to understand antrea since it will be something you might need to 
 | Feature/Aspect          | Antrea on Linux                                       | Antrea on Windows                                |
 |-------------------------|-------------------------------------------------------|--------------------------------------------------|
 | **Platform**            | Linux OS                                              | Windows Server w TKG K8s                         |
-| **OVS Integration**     | Native OVS support.                                   | Uses OVS Windows port.                           |
-| **Networking Mode**     | Uses Linux bridging and routing.                      | Uses OVS for pod-to-pod networking.              |
+| **OVS Integration**     | OVS in a pod, agent in apod talk over ssl             | OVS runs as windows NSSM services                |
 | **Network Policies**    | Fully supported with OVS.                             | UDP might have issues, also things like antrea egress wont work. loadBalancserSourceRanges largely untested in windows environments   |
 | **Runtime**             | Typically container runtimes like containerd, Docker. | Windows Server with containerd, but OVS runs directly on the host and not inside a container. |
 | **Supported Protocols** | All protocols supported by OVS on Linux.              | Some protocol limitations due to Windows OS.     |
 | **Performance**         | Direct kernel integration offers optimal performance. | May have overhead due to OVS Windows port and Windows networking stack.|
 
+If you look on your windows cluster after created you'll also notice another peculiarity: OVS installation has an output log.... 
 
+```
+9/15/2023 1:32 PM Installing OVS.psm1
+9/15/2023 1:32 PM Installing OVS kernel driver
+9/15/2023 1:32 PM Hyper-V Virtual Machine Management service status: Running
+9/15/2023 1:33 PM Found existing SSL library.
+9/15/2023 1:33 PM Found existing SSL library.
+9/15/2023 1:33 PM Creating ovsdb file
+9/15/2023 1:33 PM Create and start ovsdb-server service
+9/15/2023 1:33 PM Create and start ovs-vswitchd service.
+9/15/2023 1:33 PM Set OVS version to: 2.16.3.48285
+9/15/2023 1:33 PM OVS Installation Complete!
+```
 
 ## image-builder: "Additional downloads" i.e. antrea
 
